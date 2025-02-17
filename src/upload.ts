@@ -1,7 +1,8 @@
 import { Request, Response } from 'express'
-import { Utils, Hash, Transaction, Script } from '@bsv/sdk'
+import { Utils, Hash, Transaction, Script, SatoshisPerKilobyte } from '@bsv/sdk'
 import db from './db'
 import { OpReturn } from '@bsv/templates'
+import HashPuzzle from './HashPuzzle'
 const Data = OpReturn.default
 
 export default async function (req: Request, res: Response) {
@@ -15,8 +16,8 @@ export default async function (req: Request, res: Response) {
   const fileHash = Utils.toHex(Hash.sha256(r.bin))
 
   // grab funding tokens as required (1 per kB assuming we start at 200 bytes rather than 0)
-  const tokens = Math.ceil((length - 200) / 1000)
-  const utxos = await Promise.all(Array(tokens).fill(0).map(async () => {
+  const fees = Math.ceil((length - 200) / 1000)
+  const utxos = await Promise.all(Array(fees).fill(0).map(async () => {
     return await db.collection('utxos').findOneAndUpdate({ fileHash: null }, { $set: { fileHash } })
   }))
 
@@ -27,7 +28,7 @@ export default async function (req: Request, res: Response) {
     tx.addInput({
       sourceTransaction: Transaction.fromHex(sourceTransactions.find(d => d.txid === utxo.txid).rawtx),
       sourceOutputIndex: utxo.vout,
-      unlockingScript: Script.fromHex(utxo.unlockingScript),
+      unlockingScriptTemplate: new HashPuzzle().unlock(utxo.secret),
     })
   }
 
@@ -38,6 +39,7 @@ export default async function (req: Request, res: Response) {
   })
 
   // tx.broadcast and get a txid
+  await tx.fee(new SatoshisPerKilobyte(1))
   await tx.sign()
   const initialResponse = {} // await tx.broadcast()
   console.log({ broadcast: 'disabled' })

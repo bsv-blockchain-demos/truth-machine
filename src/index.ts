@@ -22,7 +22,7 @@ app.use(express.json())
 app.get('/', async (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'text/html')
   const remainingFundingTokens = await db.collection('funding').countDocuments({ spendTxid: null })
-  const address = key.toAddress().toString()
+  const address = key.toAddress()
   res.send(html(address, remainingFundingTokens))
 })
 

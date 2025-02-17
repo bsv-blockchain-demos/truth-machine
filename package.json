@@ -1,0 +1,25 @@
+{
+  "name": "tsx-example",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsx watch ./src/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@bsv/sdk": "^1.3.20",
+    "@bsv/templates": "^1.0.0",
+    "@types/express": "^5.0.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.1",
+    "mongodb": "^6.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.3",
+    "resolve": "^1.22.8",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,8 +1,4 @@
-# BSV TEMPLATE
-
-BSV BLOCKCHAIN | Template repository for open-source projects
-
-Update this README with information about the project.
+# Data Timestamper & Funding Service
 
 ## Table of Contents
 
@@ -15,38 +11,25 @@ Update this README with information about the project.
 
 ## Objective
 
-Toe objective of this project is to make it easier to create new open-source projects within Bitcoin SV.
+Spin this up to host your own time stamping service using the BSV blockchain.
 
 ## Getting Started
 
-### Fork the repo
-
-To create a project from this template:
+### Docker
 
 ```bash
-git clone https://github.com/bitcoin-sv/template
+docker compose up
 ```
 
 ### Basic Usage
-
 
 ```typescript
 // TODO: Code Example Will Go Here
 ```
 
-For a more detailed tutorial and advanced examples, check our [Documentation](#documentation).
-
-## Features & Deliverables
-
-- **Main Project Feature**: Description of the feature
-
-- **Main Project Feature 2**: Description of the feature
-
-- **Secondary Project Feature**: Description of the feature
-
 ## Documentation
 
-Provide detailed information and links to the various places the project is documented, including concepts, getting started guides, tutorials, and API specifications.
+[https://bitcoin-sv.github.io/data-timestamper](https://bitcoin-sv.github.io/data-timestamper)
 
 ## Contribution Guidelines
 
@@ -65,11 +48,11 @@ For information on past releases, check out the [changelog](./CHANGELOG.md). For
 
 ## Support & Contacts
 
-Project Owners: `<names and email addresses>`
+Project Owners: `Darren Kellenschwiler`
 
-Development Team Lead: `<name and email>`
+Development Team Lead: @sirdeggen
 
-For questions, bug reports, or feature requests, please open an issue on GitHub or contact us directly.
+For questions, bug reports, or feature requests, please open an issue on GitHub.
 
 ## License
 

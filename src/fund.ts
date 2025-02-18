@@ -1,12 +1,16 @@
 import { Request, Response } from 'express'
-import { PrivateKey, SatoshisPerKilobyte, Transaction } from '@bsv/sdk'
+import { P2PKH, PrivateKey, SatoshisPerKilobyte, Transaction } from '@bsv/sdk'
 import WocClient from './woc'
 import dotenv from 'dotenv'
 import HashPuzzle from './HashPuzzle'
 import db from './db'
+import Arc from './arc'
 dotenv.config()
 
+const { NETWORK } = process.env
+
 const woc = new WocClient()
+woc.setNetwork(NETWORK)
 
 const { FUNDING_WIF } = process.env
 const key = PrivateKey.fromWif(FUNDING_WIF)
@@ -45,7 +49,7 @@ export default async function (req: Request, res: Response) {
   tx.addInput({
     sourceTransaction,
     sourceOutputIndex: utxos[0].vout,
-    unlockingScriptTemplate: new HashPuzzle().unlock(key)
+    unlockingScriptTemplate: new P2PKH().unlock(key)
   })
   for (const pair of secretPairs) {
     tx.addOutput({
@@ -56,7 +60,7 @@ export default async function (req: Request, res: Response) {
   await tx.fee(new SatoshisPerKilobyte(1))
   await tx.sign()
 
-  const initialResponse = {} //await tx.broadcast()
+  const initialResponse = await tx.broadcast(Arc)
 
   const txid = tx.id('hex')
   const rawtxHex = tx.toHex()

@@ -19,5 +19,5 @@
         // Disallow features that require cross-file awareness
         "isolatedModules": true,
     },
-    "include": ["src/**/*.ts", "src/db.ts", "src/woc.js"]
-}
+    "include": ["src/**/*.ts"]
+}   

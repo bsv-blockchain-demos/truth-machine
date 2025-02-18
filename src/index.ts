@@ -10,7 +10,7 @@ import integrity from './integrity'
 import fund from './fund'
 dotenv.config()
 
-const { FUNDING_WIF, PORT } = process.env
+const { FUNDING_WIF, PORT, NETWORK } = process.env
 
 const key = PrivateKey.fromWif(FUNDING_WIF)
 
@@ -22,7 +22,7 @@ app.use(express.json())
 app.get('/', async (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'text/html')
   const remainingFundingTokens = await db.collection('funding').countDocuments({ spendTxid: null })
-  const address = key.toAddress()
+  const address = NETWORK === 'test' ? key.toAddress([0x6f]) : key.toAddress()
   res.send(html(address, remainingFundingTokens))
 })
 

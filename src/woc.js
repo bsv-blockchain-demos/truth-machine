@@ -27,6 +27,7 @@ export default class WocClient {
         while (this.requestQueue.length > 0) {
             const { resolve, request } = this.requestQueue.shift();
             try {
+                console.log({ url: request.url, options: request.options })
                 const response = await fetch(request.url, request.options, { cache: 'no-store', next: { revalidate: 3600 } });
                 if (request.options.headers.Accept === 'plain/text') {
                     const text = await response.text();

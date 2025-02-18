@@ -11,6 +11,6 @@ const options = {
 
 const Arc = (NETWORK === 'main') 
     ? new ARC('https://arc.taal.com', options) 
-    : new ARC('https://test-arc.taal.com', options)
+    : new ARC('https://arc-test.taal.com', options)
 
 export default Arc

@@ -1,9 +1,11 @@
 import { Request, Response } from 'express'
-import { Utils, Hash, Transaction, Script, SatoshisPerKilobyte } from '@bsv/sdk'
+import { Utils, Hash, Transaction, SatoshisPerKilobyte } from '@bsv/sdk'
 import db from './db'
 import { OpReturn } from '@bsv/templates'
 import HashPuzzle from './HashPuzzle'
+import Arc from './arc'
 const Data = OpReturn.default
+
 
 export default async function (req: Request, res: Response) {
   const time = Date.now()
@@ -41,8 +43,8 @@ export default async function (req: Request, res: Response) {
   // tx.broadcast and get a txid
   await tx.fee(new SatoshisPerKilobyte(1))
   await tx.sign()
-  const initialResponse = {} // await tx.broadcast()
-  console.log({ broadcast: 'disabled' })
+  const initialResponse = await tx.broadcast(Arc)
+  
   const txid = tx.id('hex')
 
   // store file in database

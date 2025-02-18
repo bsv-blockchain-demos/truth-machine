@@ -1,9 +1,9 @@
 import { Request, Response } from 'express'
 import { Utils, Hash, Transaction, SatoshisPerKilobyte } from '@bsv/sdk'
-import db from './db'
+import db from '../db'
 import { OpReturn } from '@bsv/templates'
-import HashPuzzle from './HashPuzzle'
-import Arc from './arc'
+import HashPuzzle from '../HashPuzzle'
+import Arc from '../arc'
 const Data = OpReturn.default
 
 

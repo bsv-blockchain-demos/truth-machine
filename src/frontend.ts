@@ -1,4 +1,12 @@
-export default (address, balance) => `
+import { Request, Response } from 'express'
+import { PrivateKey } from '@bsv/sdk'
+import db from './db'
+
+const { FUNDING_WIF, NETWORK } = process.env
+
+const key = PrivateKey.fromWif(FUNDING_WIF)
+
+const html = (address, balance) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,4 +30,11 @@ export default (address, balance) => `
     make a BSV payment to ${address} and hit the <a href="/fund/10">/fund/{number}</a> endpoint.</p>
 </body>
 </html>
-`   
+`
+
+export default async function (req: Request, res: Response) {
+  res.setHeader('Content-Type', 'text/html')
+  const remainingFundingTokens = await db.collection('funding').countDocuments({ spendTxid: null })
+  const address = NETWORK === 'test' ? key.toAddress([0x6f]) : key.toAddress()
+  res.send(html(address, remainingFundingTokens))
+}

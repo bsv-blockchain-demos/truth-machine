@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import db from './db'
+import db from '../db'
 import { MerklePath, Beef } from '@bsv/sdk'
 
 export default async function (req: Request, res: Response) {

@@ -1,10 +1,10 @@
 import { Request, Response } from 'express'
 import { P2PKH, PrivateKey, SatoshisPerKilobyte, Transaction } from '@bsv/sdk'
-import WocClient from './woc'
+import WocClient from '../woc'
 import dotenv from 'dotenv'
-import HashPuzzle from './HashPuzzle'
-import db from './db'
-import Arc from './arc'
+import HashPuzzle from '../HashPuzzle'
+import db from '../db'
+import Arc from '../arc'
 dotenv.config()
 
 const { NETWORK, FUNDING_WIF } = process.env

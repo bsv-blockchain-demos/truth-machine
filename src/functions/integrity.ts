@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import { Transaction, WhatsOnChain } from '@bsv/sdk'
-import db from './db'
+import db from '../db'
 
 export default async function (req: Request, res: Response) {
     // get the data by its txid or hash

@@ -34,7 +34,7 @@ const html = (address, balance) => `
 
 export default async function (req: Request, res: Response) {
   res.setHeader('Content-Type', 'text/html')
-  const remainingFundingTokens = await db.collection('funding').countDocuments({ spendTxid: null })
+  const remainingFundingTokens = await db.collection('utxos').countDocuments({ spendTxid: null })
   const address = NETWORK === 'test' ? key.toAddress([0x6f]) : key.toAddress()
   res.send(html(address, remainingFundingTokens))
 }

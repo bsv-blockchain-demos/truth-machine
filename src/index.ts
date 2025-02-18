@@ -7,13 +7,11 @@ const { PORT } = process.env
 
 const app: Application = express()
 
-app.use(express.json())
-
 app.get('/', frontend)
 app.get('/fund/:number', fund)
-app.post('/upload', upload)
+app.use(express.raw()).post('/upload', upload)
 app.get('/download/:id', download)
-app.post('/callback', callback)
+app.use(express.json()).post('/callback', callback)
 app.get('/integrity/:id', integrity)
 
 app.listen(PORT, () => {

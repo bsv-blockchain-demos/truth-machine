@@ -76,6 +76,7 @@ export default async function (req: Request, res: Response) {
     const txDbResponse = await db.collection('txs').insertOne({
       txid,
       rawtx: rawtxHex,
+      beef: tx.toHexBEEF(),
       arc: [initialResponse],
       number,
     })

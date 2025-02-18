@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { Utils, Hash, Transaction, SatoshisPerKilobyte } from '@bsv/sdk'
+import { Utils, Hash, Transaction } from '@bsv/sdk'
 import db from '../db'
 import { OpReturn } from '@bsv/templates'
 import HashPuzzle from '../HashPuzzle'

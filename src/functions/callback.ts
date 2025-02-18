@@ -19,9 +19,9 @@ export default async function (req: Request, res: Response) {
         const beef = Beef.fromString(document.beef, 'hex')
         beef.mergeBump(MerklePath.fromHex(merklePath))
         const updated = beef.toHex()
-        await db.collection('txs').updateOne({ txid }, { $set: { beef: updated }, $addToSet: { arc: req.body, time: Date.now() } })
+        await db.collection('txs').updateOne({ txid }, { $set: { beef: updated }, $addToSet: { arc: req.body } })
     } else {
-        await db.collection('txs').updateOne({ txid }, { $addToSet: { arc: req.body, time: Date.now() } })
+        await db.collection('txs').updateOne({ txid }, { $addToSet: { arc: req.body } })
     }
     res.send({ accepted: 'true' })
 }

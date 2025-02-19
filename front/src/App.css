@@ -3,6 +3,55 @@
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  background-color: #ffffff;
+  color: #000000;
+  font-family: Helvetica, sans-serif;
+}
+
+.big {
+  font-size: 1.5em;
+}
+
+button {
+  background: linear-gradient(to right, #00eeff, #004cff);
+  color: #ffffff;
+  border: none;
+  border-radius: 0.25em;
+  padding: 0.75em 1.5em;
+  font-size: 1em;
+  cursor: pointer;
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  transition: box-shadow .3s, transform .3s;
+  font-weight: bold;
+  margin: 0.75em;
+}
+
+button:hover {
+  background: linear-gradient(to right, #00eeff, #004cff);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transform: scale(1.02);
+}
+
+section {
+  border: 1px solid #ddd;
+  border-radius: 0.5em;
+  padding: 1.5em;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: 1.5em auto;
+}
+
+.token-input {
+  font-family: monospace;
+  font-size: 1.5em;
+  padding: 0.5em;
+  border: 1px solid #ccc;
+  border-radius: 0.5em;
+  width: 8ch;
+  text-align: right;
+  background-color: #ffffff;
+  color: #000000;
 }
 
 .logo {
@@ -35,6 +84,8 @@
 
 .card {
   padding: 2em;
+  background-color: #ffffff;
+  color: #000000;
 }
 
 .read-the-docs {

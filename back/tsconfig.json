@@ -20,5 +20,5 @@
         "isolatedModules": true,
         "outDir": "./dist"
     },
-    "include": ["src/**/*.ts", "front/frontend.tsx"]
+    "include": ["src/**/*.ts"]
 }   

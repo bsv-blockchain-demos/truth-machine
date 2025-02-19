@@ -1,4 +1,8 @@
 import { MerklePath, Transaction } from '@bsv/sdk'
+import dotenv from 'dotenv'
+dotenv.config()
+
+const { NETWORK } = process.env
 
 // https://api.whatsonchain.com/v1/bsv/main/exchangerate
 /**
@@ -9,7 +13,7 @@ import { MerklePath, Transaction } from '@bsv/sdk'
  * const woc = new WocClient()
  * const utxos = await woc.getUtxos('1BpEi6DfDAUFd7GtittLSdBeYJvcoaVggu')
  */
-export default class WocClient {
+class WocClient {
     constructor() {
         this.api = 'https://api.whatsonchain.com/v1/bsv/main'
     }
@@ -156,3 +160,8 @@ export default class WocClient {
         return tx
     }
 }
+
+const woc = new WocClient()
+woc.setNetwork(NETWORK)
+
+export default woc

@@ -1,19 +1,10 @@
 import { Request, Response } from 'express'
-import { P2PKH, PrivateKey, SatoshisPerKilobyte, Transaction } from '@bsv/sdk'
-import WocClient from '../woc'
-import dotenv from 'dotenv'
+import { P2PKH, SatoshisPerKilobyte, Transaction } from '@bsv/sdk'
 import HashPuzzle from '../HashPuzzle'
 import db from '../db'
 import Arc from '../arc'
-dotenv.config()
-
-const { NETWORK, FUNDING_WIF } = process.env
-
-const woc = new WocClient()
-woc.setNetwork(NETWORK)
-
-const key = PrivateKey.fromWif(FUNDING_WIF)
-const address = NETWORK === 'test' ? key.toAddress([0x6f]) : key.toAddress()
+import { address, key } from '../functions/address'
+import woc from '../woc'
 
 export default async function (req: Request, res: Response) {
   try {

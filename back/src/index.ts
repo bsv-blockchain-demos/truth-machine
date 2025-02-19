@@ -1,10 +1,13 @@
 import express, { Application } from 'express'
-import { upload, download, callback, integrity, fund } from './functions'
+import { upload, download, callback, integrity, fund, checkTreasury } from './functions'
 import dotenv from 'dotenv'
+import cors from 'cors'
 dotenv.config()
 const { PORT } = process.env
 
 const app: Application = express()
+
+app.use(cors({ origin: '*' }))
 
 // Fund the treasury by splitting funds associated 
 // with a regular address into a number of 1 sat outputs.
@@ -21,6 +24,9 @@ app.get('/integrity/:id', integrity)
 
 // Callbacks from ARC will deliver Merkle Paths to this endpoint.
 app.use(express.json()).post('/callback', callback)
+
+// Checks the available number of utxos in the treasury.
+app.use(express.json()).get('/checkTreasury', checkTreasury)
 
 app.listen(PORT, () => {
   console.log(`http://localhost:${PORT}`);

@@ -5,7 +5,7 @@
         "moduleDetection": "force",
 
         // Ignore module structure
-        "module": "Preserve",
+        "module": "commonjs",
 
         // Allow JSON modules to be imported
         "resolveJsonModule": true,

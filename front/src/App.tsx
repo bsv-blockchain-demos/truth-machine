@@ -53,39 +53,34 @@ function App() {
         <div style={{ margin: '2rem', fontFamily: 'Helvetica, sans-serif' }}>
             <h1>Truth Machine</h1>
             <h2>Data Integrity & Timestamping Service</h2>
-            <section>
-                <h3>Treasury</h3>
-                <p>Tokens Ready: <big>{fundingInfo.tokens.toLocaleString()}</big></p>
-                <p>Balance at Configured Address: <big>{fundingInfo.balance.toLocaleString()}</big> satoshis</p>
-                <p>
-                    To top up the balance, make a BSV payment to: <br /><span style={{ fontWeight: 'bold', userSelect: 'all' }}>{fundingInfo.address}</span>
-                </p>
-                <QRCodeSVG value={fundingInfo.address} />
-                <p>
-                    To create tokens from the available balance:
-                </p>
-                <label>
-                    <input
-                        type='number'
-                        min='1'
-                        max='1000'
-                        className='token-input'
-                        value={tokenNumber}
-                        onChange={(e) => setTokenNumber(parseInt(e.target.value))}
-                    />{' '}
-                    tokens
-                </label>
-                <button onClick={() => createFunds(tokenNumber)}>Create Tokens</button>
-            </section>
-            <section>
-                <h3>Upload File</h3>
-                <Upload />
-            </section>
-            <section>
-                <h3>Download File</h3>
-                <Download />
-            </section>
-            
+            <main>
+                <section>
+                    <h3>Treasury</h3>
+                    <QRCodeSVG value={fundingInfo.address} />
+                    <p>Balance: <big>{fundingInfo.balance.toLocaleString()}</big> satoshis</p>
+                    <p>Tokens Ready: <big>{fundingInfo.tokens.toLocaleString()}</big></p>
+                    <label>
+                        <input
+                            type='number'
+                            min='1'
+                            max='1000'
+                            className='token-input'
+                            value={tokenNumber}
+                            onChange={(e) => setTokenNumber(parseInt(e.target.value))}
+                        />{' '}
+                        tokens
+                    </label>
+                    <button onClick={() => createFunds(tokenNumber)}>Create Tokens</button>
+                </section>
+                <section>
+                    <h3>Upload</h3>
+                    <Upload />
+                </section>
+                <section>
+                    <h3>Download</h3>
+                    <Download />
+                </section>
+            </main>
         </div>
     )
 }

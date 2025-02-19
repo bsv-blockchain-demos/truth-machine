@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import db from '../db'
-import { MerklePath, Beef } from '@bsv/sdk'
+import { MerklePath, Beef, Transaction } from '@bsv/sdk'
 
 export default async function (req: Request, res: Response) {
     // make sure this is ARC calling us
@@ -18,7 +18,8 @@ export default async function (req: Request, res: Response) {
         }
         const beef = Beef.fromString(document.beef, 'hex')
         beef.mergeBump(MerklePath.fromHex(merklePath))
-        const updated = beef.toHex()
+        const tx = beef.findAtomicTransaction(txid)
+        const updated = tx.toHexBEEF()
         await db.collection('txs').updateOne({ txid }, { $set: { beef: updated }, $addToSet: { arc: req.body } })
     } else {
         await db.collection('txs').updateOne({ txid }, { $addToSet: { arc: req.body } })

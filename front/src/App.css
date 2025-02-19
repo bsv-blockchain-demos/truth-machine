@@ -1,7 +1,6 @@
 #root {
-  max-width: 1280px;
-  margin: 0;
-  padding: 2rem;
+  width: 100%;
+  margin: 2rem 0;
   text-align: center;
   font-family: 'Helvetica', sans-serif;
   color: #ffffff;
@@ -9,6 +8,7 @@
 
 html, body {
   margin: 0;
+  width: 100%;
   background: linear-gradient(to right, #14b7d0, #1513b4);
 }
 
@@ -21,7 +21,7 @@ h1 {
 }
 
 h2 {
-  font-size: 1em;
+  font-size: 1.5em;
   font-weight: bold;
   color: #ffffff;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
@@ -40,6 +40,12 @@ h3 {
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
+main {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
 section {
   color: #333333;
   border: 1px solid #ddd;
@@ -47,7 +53,7 @@ section {
   padding: 1.5em;
   background: rgba(255, 255, 255, 0.8);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  max-width: 500px;
+  width: 320px;
   margin: 1.5em auto;
 }
 
@@ -70,14 +76,34 @@ button:hover {
   transform: scale(1.02);
 }
 
+button:disabled {
+  background: #ccc;
+  color: #666;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
 .token-input {
   font-family: monospace;
   font-size: 1.5em;
   padding: 0.5em;
   border: 1px solid #ccc;
   border-radius: 0.5em;
-  width: 8ch;
+  width: 4ch;
   text-align: right;
+  background-color: #ffffff;
+  color: #000000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.txid-input {
+  font-family: monospace;
+  font-size: 1.5em;
+  padding: 0.5em;
+  border: 1px solid #ccc;
+  border-radius: 0.5em;
+  width: 16ch;
   background-color: #ffffff;
   color: #000000;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -107,4 +133,13 @@ button:hover {
 .read-the-docs {
   color: #ffeb3b;
   font-style: italic;
+}
+
+.dropzone {
+  border: 2px dashed #ccc;
+  border-radius: 4px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  background-color: white;
 }

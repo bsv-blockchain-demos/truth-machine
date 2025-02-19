@@ -1,23 +1,18 @@
 import { useState, useCallback } from 'react'
 
+const API_URL = import.meta.env?.API_URL || 'http://localhost:3030'
+
 function Upload() {
-    const [dragActive, setDragActive] = useState(false)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
-    const handleDrag = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault()
-        e.stopPropagation()
-        if (e.type === 'dragenter' || e.type === 'dragover') {
-            setDragActive(true)
-        } else if (e.type === 'dragleave') {
-            setDragActive(false)
-        }
-    }, [])
+    const handleDrag = useCallback((e: React.DragEvent<HTMLElement>) => {
+            e.preventDefault()
+            e.stopPropagation()
+        }, [])
 
     const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault()
         e.stopPropagation()
-        setDragActive(false)
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             setSelectedFile(e.dataTransfer.files[0])
         }
@@ -28,6 +23,24 @@ function Upload() {
             setSelectedFile(e.target.files[0])
         }
     }, [])
+
+    const upload = useCallback(async () => {
+        console.log({ selectedFile })
+        if (selectedFile) {
+            try {
+                const response = await (await fetch(API_URL + '/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': selectedFile.type,
+                    },
+                    body: selectedFile,
+                })).json()
+                console.log('Upload successful:', response)
+            } catch (error) {
+                console.error('Upload error:', error)
+            }
+        }
+    }, [selectedFile])
 
     return (
         <div>
@@ -44,23 +57,21 @@ function Upload() {
                         onDragOver={handleDrag}
                         onDragLeave={handleDrag}
                         onDrop={handleDrop}
-                        style={{
-                            border: '2px dashed #ccc',
-                            borderRadius: '4px',
-                            padding: '20px',
-                            textAlign: 'center',
-                            cursor: 'pointer',
-                            backgroundColor: dragActive ? '#eee' : 'white'
-                        }}
+                        className='dropzone'
                     >
                         {selectedFile ? (
-                            <p>{selectedFile.name}</p>
+                            <p style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {selectedFile.name}
+                            </p>
                         ) : (
                             <p>Drag & drop a file here or click to select one</p>
                         )}
                     </div>
                 </label>
             </form>
+            <button onClick={upload} disabled={!selectedFile}>
+                Upload
+            </button>
         </div>
     )
 }

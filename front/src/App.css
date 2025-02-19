@@ -1,19 +1,58 @@
 #root {
   max-width: 1280px;
-  margin: 0 auto;
+  margin: 0;
   padding: 2rem;
   text-align: center;
-  background-color: #ffffff;
-  color: #000000;
-  font-family: Helvetica, sans-serif;
+  font-family: 'Helvetica', sans-serif;
+  color: #ffffff;
+}
+
+html, body {
+  margin: 0;
+  background: linear-gradient(to right, #14b7d0, #1513b4);
+}
+
+h1 {
+  font-size: 3em;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+  margin-bottom: 0.25em;
+}
+
+h2 {
+  font-size: 1em;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+h3 {
+  font-size: 1.3em;
+  font-weight: bold;
+  color: #252525;
 }
 
 .big {
-  font-size: 1.5em;
+  font-size: 2em;
+  font-weight: bold;
+  color: #ffeb3b;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+section {
+  color: #333333;
+  border: 1px solid #ddd;
+  border-radius: 0.5em;
+  padding: 1.5em;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  max-width: 500px;
+  margin: 1.5em auto;
 }
 
 button {
-  background: linear-gradient(to right, #00eeff, #004cff);
+  background: linear-gradient(to right, #a3200f, #630820);
   color: #ffffff;
   border: none;
   border-radius: 0.25em;
@@ -27,19 +66,8 @@ button {
 }
 
 button:hover {
-  background: linear-gradient(to right, #00eeff, #004cff);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 1em rgba(0, 0, 0, 0.2);
   transform: scale(1.02);
-}
-
-section {
-  border: 1px solid #ddd;
-  border-radius: 0.5em;
-  padding: 1.5em;
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
-  margin: 1.5em auto;
 }
 
 .token-input {
@@ -52,6 +80,7 @@ section {
   text-align: right;
   background-color: #ffffff;
   color: #000000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .logo {
@@ -61,33 +90,21 @@ section {
   transition: filter 300ms;
 }
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 2em #ffeb3b);
 }
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
 .card {
   padding: 2em;
-  background-color: #ffffff;
+  background: rgba(255, 255, 255, 0.8);
   color: #000000;
+  border-radius: 0.5em;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .read-the-docs {
-  color: #888;
+  color: #ffeb3b;
+  font-style: italic;
 }

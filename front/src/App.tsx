@@ -20,7 +20,7 @@ import './App.css'
 import { QRCodeSVG } from 'qrcode.react'
 
 /** Base API URL with environment-specific configuration */
-const API_URL = import.meta.env?.API_URL || 'http://localhost:3030'
+const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3030'
 
 /**
  * Treasury information interface

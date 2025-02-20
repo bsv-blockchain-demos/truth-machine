@@ -27,7 +27,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      API_URL: truth-machine-backend:3030
+      VITE_API_URL: truth-machine-backend:3030
 
   mongo:
     image: mongo:6-jammy

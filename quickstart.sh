@@ -52,7 +52,7 @@ npm install
 
 echo "Creating .env file in front directory..."
 cat <<EOF > .env
-API_URL=localhost:3030 # update this if you're running the api on some domain
+VITE_API_URL=localhost:3030 # update this if you're running the api on some domain
 EOF
 
 cd ..

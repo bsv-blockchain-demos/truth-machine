@@ -1,5 +1,5 @@
 services:
-  truth-machine-backend:
+  truth-machine:
     image: bsvb/truth-machine:latest
     build:
       context: back
@@ -11,13 +11,13 @@ services:
     environment:
       NETWORK: "test"
       DB_NAME: "truth-machine"
-      FUNDING_WIF: "L5mfC9eyrGQDy2RasnDwjw7KMC4cjyLGN3oPzKDHiboYPoBcKK4T" # This is a throwaway test key
+      FUNDING_WIF: "KwEnbvYVJZrpf1HTLEb3jo9Wz19r2uzPQ2waPTPX56vfij8nd7vH"
       DOMAIN: "your-domain.com"
       CALLBACK_TOKEN: "tvhbeVfbF3nUrZTmU" # replace with your own random string
       MONGO_URI: "mongodb://mongo:27017"
       PORT: 3030
 
-  truth-machine-frontend:
+  truth-machine-demo:
     image: bsvb/truth-machine-demo:latest
     build:
       context: front

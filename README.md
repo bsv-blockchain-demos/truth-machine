@@ -26,43 +26,37 @@ A blockchain-based data integrity and timestamping system built on Bitcoin SV. T
 - Blockchain integration via WhatsOnChain
 - MongoDB for file and transaction storage
 
-## Installation
+## Quick Start
 
-1. Clone the repository:
+Prerequisites are the latest versions of docker compose and node.js - start.sh script assumes a macOS / unix starting point.     
+
+Clone the repository, and run the quickstart script:
 ```bash
 git clone https://github.com/bitcoin-sv/truth-machine.git
 cd truth-machine
+sh quickstart.sh
 ```
 
-2. Install dependencies:
+This will navigate to front and back installing deps and creating local keys, adding them to the .env and your docker-compose.yml before launching it.
+
+One thing which you may want to manually update is a reverse proxy to send your API at port 3030 the ARC callbacks. For this we recommend running ngrok locally and updating the DOMAIN env variable in the docker-compose.yml to the URL that will generate.
+
+Run 
 ```bash
-# Install backend dependencies
-cd back
-npm install
-
-# Install frontend dependencies
-cd ../front
-npm install
+ngrok http 3030
 ```
 
-## Configuration
+Then copy paste the public domain that attaches to into the .env or docker-compose.yml - whichever you're running.
 
-Create a `.env` file in the `back` directory:
-
-```env
-PORT=3030
-FUNDING_WIF=<wif format private key> # Make your own
-MONGO_URI=mongodb://localhost:27017 # this will work if you're running a mongodb community service locally, otherwise use a remote connection string
-DOMAIN=<your-domain.com> # where you'll receive callbacks with merkle paths from ARC
-CALLBACK_TOKEN=tvhbeVfbF3nUrZTmU # to make sure you don't accept callbacks from abyone else
-NETWORK=test # test | main
-DB_NAME=truth-machine
+Stop the services with [ Ctrl ] + [ C ] or
+```bash
+docker compose down
 ```
 
-Create a `.env` file in the `front` directory:
+Whenever you want to restart the services without destroying your env post setup, just run this instead:
 
-```env
-API_URL=localhost:3030 # update this if you're running the api on some domain
+```bash
+docker compose up
 ```
 
 ## Running the Application

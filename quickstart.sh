@@ -57,9 +57,10 @@ EOF
 
 cd ..
 
-# Run the demo
-echo "Building Docker images..."
-docker compose build
+# optionally build the images if you've changed the code
+# echo "Building Docker images..."
+# docker compose build
 
+# Run the demo
 echo "Starting Docker containers..."
 docker compose up

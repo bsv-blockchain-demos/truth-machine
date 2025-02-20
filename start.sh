@@ -25,13 +25,17 @@ mkdir -p .wifs
 timestamp=$(date +%Y%m%d%H%M%S)
 echo "$wif" > ".wifs/private_wif_${timestamp}.txt"
 
+echo "Generating SHA256 hash of the WIF..."
+callback=$(echo -n "$wif" | sha256sum | awk '{print $1}')
+echo "Generated SHA256 Token: $callback"
+
 echo "Creating .env file in back directory..."
 cat <<EOF > .env
 PORT=3030
 FUNDING_WIF=$wif
 MONGO_URI=mongodb://localhost:27017 # this will work if you're running a mongodb community service locally, otherwise use a remote connection string
 DOMAIN=<your-domain.com> # where you'll receive callbacks with merkle paths from ARC
-CALLBACK_TOKEN=tvhbeVfbF3nUrZTmU # to make sure you don't accept callbacks from abyone else
+CALLBACK_TOKEN=$callback # to make sure you don't accept callbacks from abyone else
 NETWORK=test # test | main
 DB_NAME=truth-machine
 EOF

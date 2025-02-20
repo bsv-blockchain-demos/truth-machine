@@ -23,7 +23,7 @@ services:
     container_name: truth-machine-frontend
     restart: always
     ports:
-      - "4173:4173"
+      - "3000:3000"
     environment:
       API_URL: truth-machine-backend:3030
 

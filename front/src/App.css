@@ -6,14 +6,19 @@
   color: #ffffff;
 }
 
-html, body {
+html {
   margin: 0;
   width: 100%;
-  background: linear-gradient(to right, #14b7d0, #1513b4);
+}
+
+body {
+  margin: 0;
+  width: 100%;
+  background: linear-gradient(135deg, #2b3a67 0%, #1a252f 100%);
 }
 
 h1 {
-  font-size: 3em;
+  font-size: 2em;
   font-weight: bold;
   color: #ffffff;
   text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
@@ -21,8 +26,8 @@ h1 {
 }
 
 h2 {
-  font-size: 1.5em;
-  font-weight: bold;
+  font-size: 1.2em;
+  font-weight: lighter;
   color: #ffffff;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
@@ -38,6 +43,11 @@ h3 {
   font-weight: bold;
   color: #ffeb3b;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.explainer {
+  color: #888888;
+  font-size: smaller;
 }
 
 main {
@@ -58,7 +68,7 @@ section {
 }
 
 button {
-  background: linear-gradient(to right, #a3200f, #630820);
+  background: linear-gradient(to right, #0a3d62 0%, #1e2f5c 100%);
   color: #ffffff;
   border: none;
   border-radius: 0.25em;
@@ -142,4 +152,18 @@ button:disabled {
   text-align: center;
   cursor: pointer;
   background-color: white;
+}
+
+.wide, .wide > h3 {
+  color: white;
+  text-align: left;
+}
+
+.wide {
+  padding: 2em;
+  border-radius: 0.5em;
+}
+
+.wide > p {
+  text-align: left;
 }

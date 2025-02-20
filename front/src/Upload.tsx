@@ -4,6 +4,7 @@ const API_URL = import.meta.env?.API_URL || 'http://localhost:3030'
 
 function Upload() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const [response, setResponse] = useState({ txid: '', network: '' })
 
     const handleDrag = useCallback((e: React.DragEvent<HTMLElement>) => {
             e.preventDefault()
@@ -36,6 +37,7 @@ function Upload() {
                     body: selectedFile,
                 })).json()
                 console.log('Upload successful:', response)
+                setResponse({ txid: response.txid, network: response.network })
             } catch (error) {
                 console.error('Upload error:', error)
             }
@@ -72,6 +74,13 @@ function Upload() {
             <button onClick={upload} disabled={!selectedFile}>
                 Upload
             </button>
+            {response.txid && (
+                <div>
+                    <h3>Upload successful</h3>
+                    <p><a target='_BLANK' href={'https://' + (response.network !== 'main' ? 'test.' : '') + 'whatsonchain.com/tx/' + response.txid}>Inspect</a></p>
+                </div>
+            )}
+            <p className='explainer'>Send file binary streams to the /upload endpoint.</p>
         </div>
     )
 }

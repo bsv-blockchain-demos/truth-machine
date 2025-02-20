@@ -4,8 +4,11 @@ import db from '../db'
 import { OpReturn } from '@bsv/templates'
 import HashPuzzle from '../HashPuzzle'
 import Arc from '../arc'
+import dotenv from 'dotenv'
+dotenv.config()
 const Data = OpReturn.default
 
+const { NETWORK } = process.env
 
 export default async function (req: Request, res: Response) {
   const time = Date.now()
@@ -77,6 +80,6 @@ export default async function (req: Request, res: Response) {
 
     // respond to client with confirmation
 
-    res.send({ txid, fileHash })
+    res.send({ txid, fileHash, network: NETWORK })
   })
 }

@@ -50,6 +50,8 @@ function Download () {
                     <button onClick={() => window.location.href = `${API_URL}/download/${fileId}`}>Download</button>
                 </div>
             )}
+            <p className='explainer'>Download files from the /download/:id endpoint. Validate their integrity using the /integrity/:id endoint.</p>
+            <p className='explainer'>The id can be either the txid of the transaction which timestamped the file, or the hash of the file data.</p>
         </div>
     )
 }

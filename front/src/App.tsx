@@ -52,11 +52,11 @@ function App() {
     return (
         <div style={{ margin: '2rem', fontFamily: 'Helvetica, sans-serif' }}>
             <h1>Truth Machine</h1>
-            <h2>Data Integrity & Timestamping Service</h2>
+            <h2>Data Integrity & Timestamping Demo</h2>
             <main>
                 <section>
                     <h3>Treasury</h3>
-                    <QRCodeSVG value={fundingInfo.address} />
+                    <QRCodeSVG value={fundingInfo.address} marginSize={2} width={128} />
                     <p>Balance: <big>{fundingInfo.balance.toLocaleString()}</big> satoshis</p>
                     <p>Tokens Ready: <big>{fundingInfo.tokens.toLocaleString()}</big></p>
                     <label>
@@ -81,6 +81,13 @@ function App() {
                     <Download />
                 </section>
             </main>
+            <div className={'wide'}>
+                <h3>Purpose</h3>
+                <p>
+                    This application is intended to demonstrate the methodology for secure data integrity and timestamping on the BSV Blockchain. 
+                    Upload a file, and its cryptographic hash is recorded on the blockchain, creating an immutable proof of existence at that exact time. Files are stored in a regular database and can be retrieved later with verifiable evidence of their creation date and integrity. The Treasury section enables token creation to fund transaction fees for the service. It ensures operational costs are covered and displays a balance of available write actions.
+                </p>
+            </div>
         </div>
     )
 }

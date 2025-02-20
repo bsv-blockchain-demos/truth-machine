@@ -18,7 +18,7 @@
 
         // Disallow features that require cross-file awareness
         "isolatedModules": true,
-        "outDir": "./api"
+        "outDir": "./dist"
     },
     "include": ["src/**/*.ts"]
 }   

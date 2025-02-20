@@ -10,7 +10,7 @@ RUN tsc
 # Stage 2: Run the application
 FROM node:20.9.0
 WORKDIR /app
-COPY --from=builder /app/api ./dist
+COPY --from=builder /app/dist ./dist
 COPY package*.json ./
 RUN npm install --production\
   && npm install -g tsx

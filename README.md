@@ -97,16 +97,15 @@ npm run build
 npm run preview
 ```
 
-### Docker Deployment
+### Docker
 
-Build the images:
+Build the images locally:
 ```bash
 docker compose build
 ```
 
 Run the containers:
 ```bash
-docker compose build
 docker compose up
 ```
 

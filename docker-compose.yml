@@ -1,0 +1,37 @@
+services:
+  truth-machine-frontend:
+    build:
+      context: front
+      dockerfile: Dockerfile
+    container_name: truth-machine-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      NETWORK: "test"
+      DB_NAME: "truth-machine"
+      FUNDING_WIF: "LzKDHiboYPoBcKK4T5mfC9eyrGQDy2RasnDwjw7KMC4cjyLGN3oP" # This is a throwaway test key
+      DOMAIN: "your-domain.com"
+      CALLBACK_TOKEN: "tvhbeVfbF3nUrZTmU"
+      MONGO_URI: "mongodb://mongo:27017"
+      PORT: 3030
+
+  mongo:
+    image: mongo:6-jammy
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    command:
+      - "http"
+      - "http://host.docker.internal:80"
+    environment:
+      NGROK_AUTHTOKEN: ""
+    ports:
+      - 4040:4040
+
+volumes:
+  mongo_data:

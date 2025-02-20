@@ -50,14 +50,19 @@ npm install
 Create a `.env` file in the `back` directory:
 
 ```env
-# Network: main, test, or stn
-NETWORK=test
+PORT=3030
+FUNDING_WIF=<wif format private key> # Make your own
+MONGO_URI=mongodb://localhost:27017 # this will work if you're running a mongodb community service locally, otherwise use a remote connection string
+DOMAIN=<your-domain.com> # where you'll receive callbacks with merkle paths from ARC
+CALLBACK_TOKEN=tvhbeVfbF3nUrZTmU # to make sure you don't accept callbacks from abyone else
+NETWORK=test # test | main
+DB_NAME=truth-machine
+```
 
-# MongoDB connection string
-MONGODB_URI=mongodb://localhost:27017/truth-machine
+Create a `.env` file in the `front` directory:
 
-# Optional: Custom API URL
-API_URL=http://localhost:3030
+```env
+API_URL=localhost:3030 # update this if you're running the api on some domain
 ```
 
 ## Running the Application

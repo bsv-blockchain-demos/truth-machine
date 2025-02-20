@@ -99,8 +99,14 @@ npm run preview
 
 ### Docker Deployment
 
-Run the entire stack using Docker Compose:
+Build the images:
 ```bash
+docker compose build
+```
+
+Run the containers:
+```bash
+docker compose build
 docker compose up
 ```
 

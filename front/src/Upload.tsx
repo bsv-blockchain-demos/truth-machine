@@ -5,6 +5,7 @@ const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3030'
 function Upload() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [response, setResponse] = useState({ txid: '', network: '' })
+    const [loading, setLoading] = useState(false)
 
     const handleDrag = useCallback((e: React.DragEvent<HTMLElement>) => {
             e.preventDefault()
@@ -29,6 +30,7 @@ function Upload() {
         console.log({ selectedFile })
         if (selectedFile) {
             try {
+                setLoading(true)
                 const response = await (await fetch(API_URL + '/upload', {
                     method: 'POST',
                     headers: {
@@ -40,6 +42,8 @@ function Upload() {
                 setResponse({ txid: response.txid, network: response.network })
             } catch (error) {
                 console.error('Upload error:', error)
+            } finally {
+                setLoading(false)
             }
         }
     }, [selectedFile])
@@ -71,7 +75,7 @@ function Upload() {
                     </div>
                 </label>
             </form>
-            <button onClick={upload} disabled={!selectedFile}>
+            <button onClick={upload} disabled={!selectedFile || loading}>
                 Upload
             </button>
             {response.txid && (

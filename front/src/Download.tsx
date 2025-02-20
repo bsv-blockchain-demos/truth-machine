@@ -47,6 +47,8 @@ function Download () {
                     <p><big>{integrityResult.valid ? 'Valid' : 'Invalid'}</big></p>
                     <p>{`${new Date(integrityResult.time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} on ${new Date(integrityResult.time).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}`}</p>
                     <p>Filehash: {integrityResult.fileHash.slice(0,16)}...</p>
+                    <p>Broadcast: {integrityResult?.broadcast ? 'success' : 'problem'}</p>
+                    {integrityResult?.inBlock && <p>Depth: {integrityResult?.depth}</p>}
                     <button onClick={() => window.location.href = `${API_URL}/download/${fileId}`}>Download</button>
                 </div>
             )}

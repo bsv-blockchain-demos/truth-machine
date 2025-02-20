@@ -46,17 +46,37 @@
  */
 
 import { Request, Response } from 'express'
-import { Transaction, WhatsOnChain, Beef, Utils } from '@bsv/sdk'
+import { Transaction, WhatsOnChain, Beef, Utils, MerklePath } from '@bsv/sdk'
 import db from '../db'
 import dotenv from 'dotenv'
 dotenv.config()
 const { NETWORK } = process.env
 
+const blockHeaderService = new WhatsOnChain(NETWORK as "main" | "test" | "stn")
+
+/**
+ * 
+ * @method verifyTipScript
+ * @param {Transaction} tx - The transaction to verify.
+ * 
+ * @returns {Promise<boolean>} - A promise that resolves when the verification is complete.
+ * 
+ * This function is used to verify the tip script of a transaction by checking the script execution only.
+ * It assumes that the Merkle path is valid and sets it to a default value.
+ */
+async function verifyTipScript(tx: Transaction): Promise<boolean> {
+    tx.inputs = tx.inputs.map((input, vin) => {
+        input.sourceTransaction.merklePath = new MerklePath(1, [[{ offset: 0, txid: true, hash: '0000000000000000000000000000000000000000000000000000000000000000'}]]) // assume valid
+        return input
+    })
+    return await tx.verify('scripts only')
+}
+
 export default async function (req: Request, res: Response) {
     try {
         // Retrieve transaction and file data
         const { id } = req.params
-        const { txid, fileHash, time, fileType, beef } = await db.collection('txs').findOne({
+        const { txid, fileHash, time, fileType, beef, arc } = await db.collection('txs').findOne({
             $or: [
                 { txid: id },
                 { fileHash: id }
@@ -71,21 +91,42 @@ export default async function (req: Request, res: Response) {
         // Extract transaction from BEEF and verify file hash commitment
         const tx = Transaction.fromHexBEEF(beef)
         const txFileHash = Utils.toUTF8(Utils.toArray(tx.outputs[0].lockingScript.toASM().split(' ')[2], 'hex'))
-        
-        // Perform SPV verification using WhatsOnChain
-        const spv = await tx.verify(new WhatsOnChain(NETWORK as "main" | "test" | "stn"))
+
         const matchedCommitment = txFileHash === fileHash
-        const valid = matchedCommitment && spv
+        
+        // Perform SPV verification using WhatsOnChain - ONLY for the tip transaction
+        let inBlock, broadcast
+        try {
+            inBlock = await tx.merklePath?.verify(txid, blockHeaderService)
+        } catch (error) {
+            console.error('SPV verification error:', error)
+        }
+        try {
+            let arcStatus = arc[0].status === 'success'
+            console.log({ arcStatus })
+            broadcast = await verifyTipScript(tx) || arcStatus
+        } catch (error) {
+            console.error('Broadcast verification error:', error)
+        }
+        const valid = matchedCommitment && (broadcast || inBlock)
+
+        if (!broadcast) {
+            res.send({ error: 'Broadcast was unsuccessful', id, txid, fileHash, valid, broadcast, inBlock, matchedCommitment })
+        }
 
         // Return error if verification fails
         if (!valid) {
-            res.send({ error: 'something did not check out', id, txid, fileHash, spv, matchedCommitment })
+            res.send({ error: 'something did not check out', id, txid, fileHash, valid, broadcast, inBlock, matchedCommitment })
             return
         }
 
+        const currentHeight = await blockHeaderService.currentHeight()
+        const height = tx.merklePath?.blockHeight
+        const depth = currentHeight - height
+
         // Return successful verification with BEEF data
         res.send({
-            txid, fileHash, time, fileType, beef, valid
+            id, txid, fileHash, time, fileType, valid, broadcast, inBlock, matchedCommitment, depth, beef
         })
     } catch (error) {
         res.send({ error: error.message })

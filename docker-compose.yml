@@ -1,5 +1,6 @@
 services:
   truth-machine-backend:
+    image: bsvb/truth-machine:latest
     build:
       context: back
       dockerfile: Dockerfile
@@ -17,6 +18,7 @@ services:
       PORT: 3030
 
   truth-machine-frontend:
+    image: bsvb/truth-machine-demo:latest
     build:
       context: front
       dockerfile: Dockerfile

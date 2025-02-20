@@ -89,7 +89,7 @@ npm run start
 ```bash
 cd front
 npm run build
-npm run serve
+npm run preview
 ```
 
 ### Docker Deployment

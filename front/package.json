@@ -1,7 +1,6 @@
 {
-  "name": "front",
-  "private": true,
-  "version": "0.0.0",
+  "name": "truth-machine-demo",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

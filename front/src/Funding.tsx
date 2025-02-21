@@ -1,11 +1,11 @@
-import { useEffectm useState } from 'react'
+import { useEffect, useState } from 'react'
 import { QRCodeSVG } from "qrcode.react"
 
 const API_URL = import.meta.env?.API_URL || 'http://localhost:3030'
 
 export default function Funding() {
     const [fundingInfo, setFundingInfo] = useState({ address: '', balance: 0, tokens: 0 })
-    const [loading, setLoading] = useState(true)
+    const [_, setLoading] = useState<boolean>(true)
     const [tokenNumber, setTokenNumber] = useState(1)
 
     async function createFunds(tokens: number) {

@@ -3,11 +3,31 @@ import { QRCodeSVG } from "qrcode.react"
 
 const API_URL = import.meta.env?.API_URL || 'http://localhost:3030'
 
+
+/**
+ * Treasury information interface
+ * @interface FundingInfo
+ * @property {string} address - Bitcoin address for funding the treasury
+ * @property {number} balance - Current balance in satoshis
+ * @property {number} tokens - Available write tokens
+ */
+interface FundingInfo {
+    address: string
+    balance: number
+    tokens: number
+}
+
 export default function Funding() {
-    const [fundingInfo, setFundingInfo] = useState({ address: '', balance: 0, tokens: 0 })
-    const [_, setLoading] = useState<boolean>(true)
+    // State for treasury information and UI control
+    const [fundingInfo, setFundingInfo] = useState<FundingInfo>({ address: '', balance: 0, tokens: 0 })
+    const [loading, setLoading] = useState<boolean>(true)
     const [tokenNumber, setTokenNumber] = useState(1)
 
+    /**
+     * Create new write tokens in the treasury
+     * @param {number} tokens - Number of tokens to create
+     * @throws {Error} When token creation fails
+     */
     async function createFunds(tokens: number) {
         try {
             setLoading(true)
@@ -20,7 +40,12 @@ export default function Funding() {
             setLoading(false)
         }
     }
-
+    
+    /**
+     * Fetch current treasury status
+     * Updates the fundingInfo state with latest treasury information
+     * @throws {Error} When API call fails
+     */
     const fetchFundingInfo = async () => {
         try {
             setLoading(true)
@@ -34,9 +59,13 @@ export default function Funding() {
         }
     }
 
+    // Initialize treasury information on component mount
     useEffect(() => {
         fetchFundingInfo()
     }, [])
+
+    if (loading) return <div>Loading...</div>
+    if (!fundingInfo) return <div>Error loading funding info.</div>
 
     return <>
         <QRCodeSVG value={fundingInfo.address} marginSize={2} width={128} />

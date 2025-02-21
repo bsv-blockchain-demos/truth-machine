@@ -70,5 +70,5 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }} # Only push on push events, not PRs
           tags: |
             docker.io/bsvb/truth-machine:${{ github.sha }}
-            docker.io/bsvb/truth-machine:latest
+            docker.io/bsvb/truth-machine:${{ needs.get_tag.outputs.deployment_tag }}
 

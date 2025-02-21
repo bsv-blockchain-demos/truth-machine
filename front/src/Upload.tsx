@@ -1,11 +1,13 @@
 import { useState, useCallback } from 'react'
+import { useFunding } from './useFunding'
 
 const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3030'
 
-function Upload({ setMutate }: { readonly setMutate: React.Dispatch<React.SetStateAction<number>> }) {
+function Upload() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [response, setResponse] = useState({ txid: '', network: '' })
     const [loading, setLoading] = useState(false)
+    const { getFundingInfo } = useFunding()
 
     const handleDrag = useCallback((e: React.DragEvent<HTMLElement>) => {
             e.preventDefault()
@@ -44,7 +46,7 @@ function Upload({ setMutate }: { readonly setMutate: React.Dispatch<React.SetSta
                 console.error('Upload error:', error)
             } finally {
                 setLoading(false)
-                setMutate((x: number) => x++)
+                getFundingInfo()
             }
         }
     }, [selectedFile])

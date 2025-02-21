@@ -31,7 +31,6 @@ jobs:
     outputs:
       deployment_tag: ${{ steps.deployment_tag.outputs.id }}
 
-jobs:
   build-and-push:
     needs: [ get_tag ]
     runs-on: ubuntu-latest

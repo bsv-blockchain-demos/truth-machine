@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { QRCodeSVG } from "qrcode.react"
 
-const API_URL = import.meta.env?.API_URL || 'http://localhost:3030'
+const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3030'
 
 
 /**

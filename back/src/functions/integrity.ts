@@ -54,6 +54,9 @@ const { NETWORK } = process.env
 
 const blockHeaderService = new WhatsOnChain(NETWORK as "main" | "test" | "stn")
 
+const defineSuccess = ['SENT_TO_NETWORK', 'ACCEPTED_BY_NETWORK', 'SEEN_ON_NETWORK', 'MINED']
+const defineFailure = ['SEEN_IN_ORPHAN_MEMPOOL', 'DOUBLE_SPEND_ATTEMPTED', 'REJECTED']
+
 /**
  * 
  * @method verifyTipScript
@@ -103,9 +106,12 @@ export default async function (req: Request, res: Response) {
         }
         if (!inBlock) {
             try {
-                let arcStatus = arc[0].status === 'success'
-                console.log({ arcStatus })
-                broadcast = await verifyTipScript(tx) || arcStatus
+                let arcSuccess = false
+                if (defineSuccess.includes(arc?.[0]?.message)) {
+                    arcSuccess = true
+                }
+                console.log({ arcSuccess, status: arc?.[0] })
+                broadcast = await verifyTipScript(tx) || arcSuccess
             } catch (error) {
                 console.error('Broadcast verification error:', error)
             }

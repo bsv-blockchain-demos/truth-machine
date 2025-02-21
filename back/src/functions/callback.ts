@@ -17,7 +17,9 @@
 
 import { Request, Response } from 'express'
 import db from '../db'
-import { MerklePath, Beef, Transaction } from '@bsv/sdk'
+import { MerklePath, Beef } from '@bsv/sdk'
+
+const defineFailure = ['SEEN_IN_ORPHAN_MEMPOOL', 'DOUBLE_SPEND_ATTEMPTED', 'REJECTED']
 
 export default async function (req: Request, res: Response) {
     try {
@@ -30,7 +32,7 @@ export default async function (req: Request, res: Response) {
 
         const { txid, merklePath, txStatus } = req.body
 
-        if (txStatus === 'REJECTED') {
+        if (defineFailure.includes(txStatus)) {
             // delete utxos associated with the txid
             await db.collection('utxos').deleteMany({ txid })
             await db.collection('txs').updateOne({ txid }, { $addToSet: { arc: req.body } })

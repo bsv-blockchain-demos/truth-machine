@@ -17,6 +17,28 @@ interface FundingInfo {
     tokens: number
 }
 
+/**
+ * Funding Component
+ * 
+ * This component is responsible for displaying and managing the treasury information for funding.
+ * 
+ * Functionality:
+ * - Displays the current Bitcoin address for funding the treasury as a QR code.
+ * - Shows the current balance in satoshis and the number of available write tokens.
+ * - Allows the user to create new write tokens by specifying the number of tokens and clicking a button.
+ * 
+ * State Management:
+ * - `fundingInfo`: Tracks the treasury status including address, balance, and tokens.
+ * - `loading`: Manages the loading state during API calls.
+ * - `tokenNumber`: Stores the number of tokens to be created.
+ * 
+ * API Integration:
+ * - `fetchFundingInfo`: Fetches the current treasury status from the API and updates the state.
+ * - `createFunds`: Creates new write tokens in the treasury by making a POST request to the API.
+ * 
+ * Lifecycle:
+ * - On component mount, it initializes the treasury information by calling `fetchFundingInfo`.
+ */
 export default function Funding() {
     // State for treasury information and UI control
     const [fundingInfo, setFundingInfo] = useState<FundingInfo>({ address: '', balance: 0, tokens: 0 })
@@ -40,7 +62,7 @@ export default function Funding() {
             setLoading(false)
         }
     }
-    
+
     /**
      * Fetch current treasury status
      * Updates the fundingInfo state with latest treasury information

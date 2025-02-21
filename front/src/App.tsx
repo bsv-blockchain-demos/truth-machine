@@ -13,16 +13,10 @@
  * - Real-time balance monitoring
  */
 
-import { useState, useEffect } from 'react'
 import Upload from './Upload'
 import Download from './Download'
 import './App.css'
-import { QRCodeSVG } from 'qrcode.react'
 import Funding from './Funding'
-
-/** Base API URL with environment-specific configuration */
-const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3030'
-
 
 /**
  * Main application component
@@ -32,14 +26,6 @@ const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3030'
  * 2. Uploading files for blockchain timestamping
  * 3. Downloading files with integrity proofs
  * 
- * State Management:
- * - Tracks treasury status (address, balance, tokens)
- * - Manages token creation process
- * - Handles loading states during API calls
- * 
- * API Integration:
- * - GET /checkTreasury - Fetch treasury status
- * - POST /fund/:tokens - Create new write tokens
  * 
  * @component
  * @example

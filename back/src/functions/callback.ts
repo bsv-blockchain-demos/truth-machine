@@ -20,42 +20,47 @@ import db from '../db'
 import { MerklePath, Beef, Transaction } from '@bsv/sdk'
 
 export default async function (req: Request, res: Response) {
-    // Validate ARC service authentication
-    console.log({ h: req.headers, b: req.body})
-    if (req?.headers?.authorization !== 'Bearer ' + process.env.CALLBACK_TOKEN) {
-        res.status(401).send({ error: 'Unauthorized' })
-        return
-    }
-
-    const { txid, merklePath, txStatus } = req.body
-
-    if (txStatus === 'REJECTED') {
-        // delete utxos associated with the txid
-        await db.collection('utxos').deleteMany({ txid })
-        await db.collection('txs').updateOne({ txid }, { $addToSet: { arc: req.body } })
-        res.send({ accepted: 'true' })
-        return
-    }
-
-    // Handle Merkle path updates
-    if (merklePath) {
-        const document = await db.collection('txs').findOne({ txid })
-        if (!document) {
-            res.status(404).send({ error: 'Not found' })
+    try {
+        // Validate ARC service authentication
+        console.log({ h: req.headers, b: req.body})
+        if (req?.headers?.authorization !== 'Bearer ' + process.env.CALLBACK_TOKEN) {
+            res.status(401).send({ error: 'Unauthorized' })
             return
         }
-        // Update transaction with Merkle path proof
-        const beef = Beef.fromString(document.beef, 'hex')
-        beef.mergeBump(MerklePath.fromHex(merklePath))
-        const tx = beef.findAtomicTransaction(txid)
-        const updated = tx.toHexBEEF()
-        // set all the utxos associated to spendable
-        await db.collection('utxos').updateMany({ txid }, { $set: { confirmed: true } })
-        await db.collection('txs').updateOne({ txid }, { $set: { beef: updated }, $addToSet: { arc: req.body } })
-    } else {
-        // Handle simple status update
-        await db.collection('txs').updateOne({ txid }, { $addToSet: { arc: req.body } })
-    }
 
-    res.send({ accepted: 'true' })
+        const { txid, merklePath, txStatus } = req.body
+
+        if (txStatus === 'REJECTED') {
+            // delete utxos associated with the txid
+            await db.collection('utxos').deleteMany({ txid })
+            await db.collection('txs').updateOne({ txid }, { $addToSet: { arc: req.body } })
+            res.send({ accepted: 'true' })
+            return
+        }
+
+        // Handle Merkle path updates
+        if (merklePath) {
+            const document = await db.collection('txs').findOne({ txid })
+            if (!document) {
+                res.status(404).send({ error: 'Not found' })
+                return
+            }
+            // Update transaction with Merkle path proof
+            const beef = Beef.fromString(document.beef, 'hex')
+            beef.mergeBump(MerklePath.fromHex(merklePath))
+            const tx = beef.findAtomicTransaction(txid)
+            const updated = tx.toHexBEEF()
+            // set all the utxos associated to spendable
+            await db.collection('utxos').updateMany({ txid }, { $set: { confirmed: true } })
+            await db.collection('txs').updateOne({ txid }, { $set: { beef: updated }, $addToSet: { arc: req.body } })
+        } else {
+            // Handle simple status update
+            await db.collection('txs').updateOne({ txid }, { $addToSet: { arc: req.body } })
+        }
+
+        res.send({ accepted: 'true' })
+    } catch (error) {
+        console.error('Failed to handle ARC callback', error)
+        res.status(500).send({ error: 'Internal Server Error' })
+    }
 }

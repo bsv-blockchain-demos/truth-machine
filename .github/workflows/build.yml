@@ -24,7 +24,7 @@ jobs:
             echo "version tag is $tag"
             echo "id=$tag" >> $GITHUB_OUTPUT
           else
-            export tag=${{ github.sha }}
+            export tag=latest
             echo "version tag is $tag"
             echo "id=$tag" >> $GITHUB_OUTPUT
           fi

@@ -27,7 +27,15 @@ export default async function (req: Request, res: Response) {
         return
     }
 
-    const { txid, merklePath } = req.body
+    const { txid, merklePath, txStatus } = req.body
+
+    if (txStatus === 'REJECTED') {
+        // delete utxos associated with the txid
+        await db.collection('utxos').deleteMany({ txid })
+        await db.collection('txs').updateOne({ txid }, { $addToSet: { arc: req.body } })
+        res.send({ accepted: 'true' })
+        return
+    }
 
     // Handle Merkle path updates
     if (merklePath) {
@@ -41,6 +49,8 @@ export default async function (req: Request, res: Response) {
         beef.mergeBump(MerklePath.fromHex(merklePath))
         const tx = beef.findAtomicTransaction(txid)
         const updated = tx.toHexBEEF()
+        // set all the utxos associated to spendable
+        await db.collection('utxos').updateMany({ txid }, { $set: { confirmed: true } })
         await db.collection('txs').updateOne({ txid }, { $set: { beef: updated }, $addToSet: { arc: req.body } })
     } else {
         // Handle simple status update

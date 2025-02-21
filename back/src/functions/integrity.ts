@@ -101,12 +101,14 @@ export default async function (req: Request, res: Response) {
         } catch (error) {
             console.error('SPV verification error:', error)
         }
-        try {
-            let arcStatus = arc[0].status === 'success'
-            console.log({ arcStatus })
-            broadcast = await verifyTipScript(tx) || arcStatus
-        } catch (error) {
-            console.error('Broadcast verification error:', error)
+        if (!inBlock) {
+            try {
+                let arcStatus = arc[0].status === 'success'
+                console.log({ arcStatus })
+                broadcast = await verifyTipScript(tx) || arcStatus
+            } catch (error) {
+                console.error('Broadcast verification error:', error)
+            }
         }
         const valid = matchedCommitment && (broadcast || inBlock)
 

@@ -25,7 +25,7 @@ import woc from '../woc'
 export default async function (req: Request, res: Response) {
     try {
         // Count available tokens (UTXOs not yet assigned to files)
-        const tokens = await db.collection('utxos').countDocuments({ fileHash: null })
+        const tokens = await db.collection('utxos').countDocuments({ fileHash: null, confirmed: true })
         
         // Get current UTXO set and calculate total balance
         const utxos = await woc.getUtxos(address)

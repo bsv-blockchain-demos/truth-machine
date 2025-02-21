@@ -110,6 +110,7 @@ export default async function (req: Request, res: Response) {
         satoshis: 1,
         secret,
         fileHash: null,
+        confirmed: false,
       }))
     )
 

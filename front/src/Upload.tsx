@@ -81,7 +81,8 @@ function Upload() {
             {response.txid && (
                 <div>
                     <h3>Upload successful</h3>
-                    <p><a target='_BLANK' href={'https://' + (response.network !== 'main' ? 'test.' : '') + 'whatsonchain.com/tx/' + response.txid}>Inspect</a></p>
+                    <p style={{ overflow: 'hidden' }}>{response?.txid}</p>
+                    <p><a target='_BLANK' href={'https://' + (response.network !== 'main' ? 'test.' : '') + 'whatsonchain.com/tx/' + response.txid}>🔗 whats on chain</a></p>
                 </div>
             )}
             <p className='explainer'>Send file binary streams to the /upload endpoint.</p>

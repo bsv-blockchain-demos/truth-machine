@@ -12,7 +12,6 @@ FROM node:20.9.0
 WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY package*.json ./
-RUN npm install --production\
-  && npm install -g tsx
+RUN npm install --production
 EXPOSE 3030
 CMD ["npm", "run", "start"]

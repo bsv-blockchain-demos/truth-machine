@@ -29,6 +29,23 @@ services:
     environment:
       VITE_API_URL: truth-machine-backend:3030
 
+  truth-machine-backend:
+    build:
+      context: back
+      dockerfile: Dockerfile
+    container_name: truth-machine-backend
+    restart: always
+    ports:
+      - "3030:3030"
+    environment:
+      NETWORK: "test"
+      DB_NAME: "truth-machine"
+      FUNDING_WIF: "LzKDHiboYPoBcKK4T5mfC9eyrGQDy2RasnDwjw7KMC4cjyLGN3oP" # This is a throwaway test key
+      DOMAIN: "your-domain.com"
+      CALLBACK_TOKEN: "tvhbeVfbF3nUrZTmU"
+      MONGO_URI: "mongodb://mongo:27017"
+      PORT: 3030
+
   mongo:
     image: mongo:6-jammy
     ports:

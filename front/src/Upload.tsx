@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 
 const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3030'
 
-function Upload() {
+function Upload({ setMutate }: { readonly setMutate: React.Dispatch<React.SetStateAction<number>> }) {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [response, setResponse] = useState({ txid: '', network: '' })
     const [loading, setLoading] = useState(false)
@@ -44,6 +44,7 @@ function Upload() {
                 console.error('Upload error:', error)
             } finally {
                 setLoading(false)
+                setMutate((x: number) => x++)
             }
         }
     }, [selectedFile])

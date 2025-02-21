@@ -1,89 +1,28 @@
 import { useEffect, useState } from 'react'
 import { QRCodeSVG } from "qrcode.react"
-
-const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3030'
-
-
-/**
- * Treasury information interface
- * @interface FundingInfo
- * @property {string} address - Bitcoin address for funding the treasury
- * @property {number} balance - Current balance in satoshis
- * @property {number} tokens - Available write tokens
- */
-interface FundingInfo {
-    address: string
-    balance: number
-    tokens: number
-}
+import { useFunding } from './useFunding'
 
 /**
  * Funding Component
+ *
+ * This component displays and manages treasury information for funding, leveraging the useFunding hook.
  * 
- * This component is responsible for displaying and managing the treasury information for funding.
- * 
- * Functionality:
- * - Displays the current Bitcoin address for funding the treasury as a QR code.
- * - Shows the current balance in satoshis and the number of available write tokens.
- * - Allows the user to create new write tokens by specifying the number of tokens and clicking a button.
- * 
- * State Management:
- * - `fundingInfo`: Tracks the treasury status including address, balance, and tokens.
- * - `loading`: Manages the loading state during API calls.
- * - `tokenNumber`: Stores the number of tokens to be created.
- * 
- * API Integration:
- * - `fetchFundingInfo`: Fetches the current treasury status from the API and updates the state.
- * - `createFunds`: Creates new write tokens in the treasury by making a POST request to the API.
- * 
- * Lifecycle:
- * - On component mount, it initializes the treasury information by calling `fetchFundingInfo`.
+ * With functionality moved to useFunding, the hook now handles:
+ * - API integration for fetching treasury status (address, balance, tokens) and creating new tokens.
+ * - State management for funding information and loading state.
+ *
+ * The component is primarily responsible for rendering:
+ * - A QR code for the funding Bitcoin address.
+ * - Treasury balance and available tokens.
+ * - A UI to specify the number of tokens to create.
  */
 export default function Funding() {
-    // State for treasury information and UI control
-    const [fundingInfo, setFundingInfo] = useState<FundingInfo>({ address: '', balance: 0, tokens: 0 })
-    const [loading, setLoading] = useState<boolean>(true)
+    const { getFundingInfo, fundingInfo, loading, createTokens } = useFunding()
     const [tokenNumber, setTokenNumber] = useState(1)
-
-    /**
-     * Create new write tokens in the treasury
-     * @param {number} tokens - Number of tokens to create
-     * @throws {Error} When token creation fails
-     */
-    async function createFunds(tokens: number) {
-        try {
-            setLoading(true)
-            const response = await (await fetch(API_URL + '/fund/' + String(tokens))).json()
-            console.log({ response })
-            await fetchFundingInfo()
-        } catch (error) {
-            console.error('Failed to create funds', error)
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    /**
-     * Fetch current treasury status
-     * Updates the fundingInfo state with latest treasury information
-     * @throws {Error} When API call fails
-     */
-    const fetchFundingInfo = async () => {
-        try {
-            setLoading(true)
-            const { address, balance, tokens } = await (await fetch(API_URL + '/checkTreasury')).json()
-            console.log({ address, balance, tokens })
-            setFundingInfo({ address, balance, tokens })
-        } catch (error) {
-            console.error('Failed to fetch funding info', error)
-        } finally {
-            setLoading(false)
-        }
-    }
 
     // Initialize treasury information on component mount
     useEffect(() => {
-        fetchFundingInfo()
+        getFundingInfo()
     }, [])
 
     if (loading) return <div>Loading...</div>
@@ -104,6 +43,6 @@ export default function Funding() {
             />{' '}
             tokens
         </label>
-        <button onClick={() => createFunds(tokenNumber)}>Create Tokens</button>
+        <button onClick={() => createTokens(tokenNumber)}>Create Tokens</button>
     </>
 }

@@ -17,22 +17,8 @@ import Upload from './Upload'
 import Download from './Download'
 import './App.css'
 import Funding from './Funding'
+import { FundingProvider } from './useFunding'
 
-/**
- * Main application component
- * 
- * Provides a comprehensive interface for:
- * 1. Managing the treasury (viewing balance, creating tokens)
- * 2. Uploading files for blockchain timestamping
- * 3. Downloading files with integrity proofs
- * 
- * 
- * @component
- * @example
- * return (
- *   <App />
- * )
- */
 function App() {
     /**
      * Main application UI
@@ -52,25 +38,27 @@ function App() {
         <div style={{ margin: '2rem', fontFamily: 'Helvetica, sans-serif' }}>
             <h1>Truth Machine</h1>
             <h2>Data Integrity & Timestamping Demo</h2>
-            <main>
-                {/* Treasury Management Section */}
-                <section>
-                    <h3>Treasury</h3>
-                    <Funding />
-                </section>
+            <FundingProvider>
+                <main>
+                    {/* Treasury Management Section */}
+                    <section>
+                        <h3>Treasury</h3>
+                        <Funding />
+                    </section>
 
-                {/* File Upload Section */}
-                <section>
-                    <h3>Upload</h3>
-                    <Upload />
-                </section>
+                    {/* File Upload Section */}
+                    <section>
+                        <h3>Upload</h3>
+                        <Upload />
+                    </section>
 
-                {/* File Download Section */}
-                <section>
-                    <h3>Download</h3>
-                    <Download />
-                </section>
-            </main>
+                    {/* File Download Section */}
+                    <section>
+                        <h3>Download</h3>
+                        <Download />
+                    </section>
+                </main>
+            </FundingProvider>
 
             {/* Purpose Description */}
             <div className={'wide'}>

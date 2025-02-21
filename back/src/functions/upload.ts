@@ -71,32 +71,28 @@ export default async function (req: Request, res: Response) {
       console.log({ file })
 
       // Calculate file hash and required token count
-      const length = file.length
+      const length = 32 // just the hash
       const fileHash = Utils.toHex(Hash.sha256(Utils.toArray(file.toString('hex'), 'hex')))
       console.log({ fileHash })
       
       // Calculate and allocate required tokens
       const fees = Math.ceil(Math.max(1, (length - 200)) / 1000)
       console.log({ fees })
-      const utxos = await Promise.all(Array(fees).fill(0).map(async () => {
-        return await db.collection('utxos').findOneAndUpdate({ fileHash: null, confirmed: true }, { $set: { fileHash } })
-      }))
+      const utxo = await db.collection('utxos').findOneAndUpdate({ fileHash: null, confirmed: true }, { $set: { fileHash } })
 
-      console.log({ utxos })
+      console.log({ utxo })
 
       // Create transaction with file hash commitment
-      const sourceTransactions = await db.collection('txs').find({ txid: { $in: utxos.map(utxo => utxo.txid) } }).toArray()
-      console.log({ sourceTransactions })
+      const sourceTransaction = await db.collection('txs').findOne({ txid: utxo.txid })
+      console.log({ sourceTransaction })
       const tx = new Transaction()
       
-      // Add inputs from allocated tokens
-      for (const utxo of utxos) {
-        tx.addInput({
-          sourceTransaction: Transaction.fromHex(sourceTransactions.find(d => d.txid === utxo.txid).rawtx),
-          sourceOutputIndex: utxo.vout,
-          unlockingScriptTemplate: new HashPuzzle().unlock(utxo.secret.secret),
-        })
-      }
+      // Add input from allocated tokens
+      tx.addInput({
+        sourceTransaction: Transaction.fromHex(sourceTransaction.rawtx),
+        sourceOutputIndex: utxo.vout,
+        unlockingScriptTemplate: new HashPuzzle().unlock(utxo.secret.secret),
+      })
 
       // Add OP_RETURN output with file hash
       tx.addOutput({

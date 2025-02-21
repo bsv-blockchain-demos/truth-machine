@@ -3,6 +3,8 @@ name: Build and Push Docker Image
 # Trigger the workflow on push or pull request to the main branch
 on:
   push:
+    tags:
+      - 'v*'
     branches:
       - master
   pull_request:
@@ -10,9 +12,29 @@ on:
       - master
 
 jobs:
-  build-and-push:
+  # Get version tag
+  get_tag:
     runs-on: ubuntu-latest
+    steps:
+      - name: Determine deployment tag
+        id: deployment_tag
+        run: |
+          if [[ '${{ github.ref_type }}' == 'tag' ]]; then
+            export tag=${{ github.ref_name }}
+            echo "version tag is $tag"
+            echo "id=$tag" >> $GITHUB_OUTPUT
+          else
+            export tag=${{ github.sha }}
+            echo "version tag is $tag"
+            echo "id=$tag" >> $GITHUB_OUTPUT
+          fi
+    outputs:
+      deployment_tag: ${{ steps.deployment_tag.outputs.id }}
 
+jobs:
+  build-and-push:
+    needs: [ get_tag ]
+    runs-on: ubuntu-latest
     steps:
       # Step 1: Check out the repository code
       - name: Checkout code
@@ -38,7 +60,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }} # Only push on push events, not PRs
           tags: |
             docker.io/bsvb/truth-machine-demo:${{ github.sha }}
-            docker.io/bsvb/truth-machine:latest
+            docker.io/bsvb/truth-machine: ${{ needs.get_tag.outputs.deployment_tag }}
 
       # Step 5: Build and push the backend Docker image
       - name: Build and push frontend Docker image

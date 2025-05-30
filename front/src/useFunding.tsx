@@ -11,6 +11,7 @@ interface FundingContextType {
     loading: boolean
     getFundingInfo: () => Promise<void>
     createTokens: (tokens: number) => Promise<void>
+    utxoStatusUpdate: () => Promise<void>
 }
 
 const FundingContext = createContext<FundingContextType | undefined>(undefined)
@@ -62,7 +63,19 @@ export const FundingProvider: React.FC<FundingProviderProps> = ({ children }) =>
         }
     }
 
-    const contextValue = useMemo(() => ({ fundingInfo, loading, getFundingInfo, createTokens }), [fundingInfo, loading, getFundingInfo, createTokens])
+    async function utxoStatusUpdate() {
+        try {
+            const response = await (await fetch(API_URL + '/utxoStatusUpdate')).json()
+            console.info('UTXO Status Update: ', response)
+            if(response.success && response.updated.length > 0) {
+                await getFundingInfo()
+            }
+        } catch (error) {
+            console.error('Failed to update UTXO status', error)
+        }
+    }
+
+    const contextValue = useMemo(() => ({ fundingInfo, loading, getFundingInfo, createTokens, utxoStatusUpdate }), [fundingInfo, loading, getFundingInfo, createTokens, utxoStatusUpdate])
 
     return (
         <FundingContext.Provider value={contextValue}>

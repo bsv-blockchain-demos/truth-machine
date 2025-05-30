@@ -77,7 +77,7 @@ export default async function (req: Request, res: Response) {
       
       // For a 32 byte hash fees will always be 1
       const fees = 1
-      const utxo = await db.collection('utxos').findOneAndUpdate({ fileHash: null, confirmed: true }, { $set: { fileHash } })
+      const utxo = await db.collection('utxos').findOneAndUpdate({ fileHash: null, confirmed: true, invalid: null }, { $set: { fileHash } })
 
       console.log({ utxo })
 

@@ -1,5 +1,5 @@
 import express, { Application } from 'express'
-import { upload, download, callback, integrity, fund, checkTreasury } from './functions'
+import { upload, download, callback, integrity, fund, checkTreasury, utxoStatusUpdate } from './functions'
 import dotenv from 'dotenv'
 import cors from 'cors'
 dotenv.config()
@@ -27,6 +27,9 @@ app.use(express.json()).post('/callback', callback)
 
 // Checks the available number of utxos in the treasury.
 app.use(express.json()).get('/checkTreasury', checkTreasury)
+
+// Update utxo status
+app.get('/utxoStatusUpdate', utxoStatusUpdate)
 
 app.listen(PORT, () => {
   console.log(`http://localhost:${PORT}`);

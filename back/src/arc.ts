@@ -13,7 +13,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 // Environment variables for ARC configuration
-const { NETWORK, DOMAIN, CALLBACK_TOKEN } = process.env
+export const { NETWORK, DOMAIN, CALLBACK_TOKEN } = process.env
 
 /**
  * ARC client configuration options
@@ -25,12 +25,14 @@ const options = {
     callbackToken: CALLBACK_TOKEN,
 }
 
+export const ARC_URL = (NETWORK === 'main') 
+    ? 'https://arc.taal.com'
+    : 'https://arc-test.taal.com'
+
 /**
  * Initialize ARC client based on network environment
  * Uses production endpoint for 'main' network, test endpoint otherwise
  */
-const Arc = (NETWORK === 'main') 
-    ? new ARC('https://arc.taal.com', options) 
-    : new ARC('https://arc-test.taal.com', options)
+const Arc = new ARC(ARC_URL, options)
 
 export default Arc  

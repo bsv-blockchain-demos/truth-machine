@@ -1,5 +1,5 @@
 import express, { Application } from 'express'
-import { upload, download, callback, integrity, fund, checkTreasury, utxoStatusUpdate } from './functions'
+import { upload, download, callback, integrity, fund, checkTreasury, utxoStatusUpdate, allFunds } from './functions'
 import dotenv from 'dotenv'
 import cors from 'cors'
 dotenv.config()
@@ -12,6 +12,10 @@ app.use(cors({ origin: '*' }))
 // Fund the treasury by splitting funds associated 
 // with a regular address into a number of 1 sat outputs.
 app.get('/fund/:number', fund)
+
+// Fund the treasury by splitting funds associated 
+// with a regular address into a number of 1 sat outputs.
+app.get('/allFunds', allFunds)
 
 // Upload a file to the BSV Blockchain.
 app.use(express.raw()).post('/upload', upload)

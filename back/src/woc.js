@@ -170,7 +170,7 @@ class WocClient {
         confirmed?.result?.map(utxo => combined.push(utxo))
         unconfirmed?.result?.map(utxo => combined.push(utxo))
         const script = confirmed?.script || unconfirmed?.script || ''
-        const formatted = combined.map(u => ({ txid: u.tx_hash, vout: u.tx_pos, satoshis: u.value, script }))
+        const formatted = combined.filter(u => !u.isSpentInMempoolTx).map(u => ({ txid: u.tx_hash, vout: u.tx_pos, satoshis: u.value, script }))
         console.log({ confirmed, unconfirmed, combined, formatted })
         return formatted
     }
@@ -182,6 +182,15 @@ class WocClient {
      */
     async getTx(txid) {
         return this.get(`/tx/${txid}/hex`)
+    }
+
+    /**
+     * Get beef
+     * @param {string} txid - Transaction ID
+     * @returns {Promise<string>} Raw transaction hex
+     */
+    async getBeef(txid) {
+        return this.get(`/tx/${txid}/beef`)
     }
 
     /**

@@ -88,7 +88,7 @@ export default async function (req: Request, res: Response) {
       
       // Add input from allocated tokens
       tx.addInput({
-        sourceTransaction: Transaction.fromHex(sourceTransaction.rawtx),
+        sourceTransaction: Transaction.fromHexBEEF(sourceTransaction.beef),
         sourceOutputIndex: utxo.vout,
         unlockingScriptTemplate: new HashPuzzle().unlock(utxo.secret.secret),
       })
@@ -112,7 +112,6 @@ export default async function (req: Request, res: Response) {
       const document = {
         txid,
         fileHash,
-        rawtx: tx.toHex(),
         beef: tx.toHexBEEF(),  // Initial BEEF without BUMPs
         arc: [initialResponse], // ARC responses track BUMP updates
         file,

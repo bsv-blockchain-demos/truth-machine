@@ -49,7 +49,7 @@ export default async function (req: Request, res: Response) {
 
     // Check funding availability
     const utxos = await woc.getUtxos(address)
-    const rawtx = await woc.getTx(utxos[0].txid)
+    const beef = await woc.getBeef(utxos[0].txid)
     const max = utxos.reduce((a, b) => a + b.satoshis - 1, 0)
 
     if (max < number) {
@@ -64,7 +64,7 @@ export default async function (req: Request, res: Response) {
       secretPairs.push(pair)
     }
 
-    const sourceTransaction = Transaction.fromHex(rawtx)
+    const sourceTransaction = Transaction.fromHexBEEF(beef)
 
     // Create transaction with hash-locked outputs
     const tx = new Transaction()
@@ -90,12 +90,10 @@ export default async function (req: Request, res: Response) {
     const initialResponse = await tx.broadcast(Arc)
 
     const txid = tx.id('hex')
-    const rawtxHex = tx.toHex()
 
     // Store transaction data
     const txDbResponse = await db.collection('txs').insertOne({
       txid,
-      rawtx: rawtxHex,
       beef: tx.toHexBEEF(),
       arc: [initialResponse],
       number,

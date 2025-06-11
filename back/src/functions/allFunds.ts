@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { fromUtxo, P2PKH, SatoshisPerKilobyte, Transaction } from '@bsv/sdk'
+import { fromUtxo, MerklePath, P2PKH, SatoshisPerKilobyte, Transaction } from '@bsv/sdk'
 import HashPuzzle from '../HashPuzzle'
 import db from '../db'
 import Arc from '../arc'
@@ -11,7 +11,6 @@ export default async function (req: Request, res: Response) {
     // Check funding availability - important to note that the assumption made here 
     // is that there's only one utxo which corresponds to this address.
     const utxos = await woc.getUtxos(address)
-    const rawtx = await woc.getTx(utxos[0].txid)
     const max = utxos.reduce((a, b) => a + b.satoshis - 1, 0)
 
     const lockingScript = new P2PKH().lock(address).toHex()
@@ -32,12 +31,14 @@ export default async function (req: Request, res: Response) {
     // end of temp limit
 
     const fundsTx = new Transaction()
-    fundsTx.addInput(fromUtxo({
-      txid: utxos[0].txid,
-      vout: utxos[0].vout,
-      satoshis: utxos[0].satoshis,
-      script: lockingScript,
+    utxos.forEach((utxo) => {
+      fundsTx.addInput(fromUtxo({
+        txid: utxo.txid,
+        vout: utxo.vout,
+        satoshis: utxo.satoshis,
+        script: lockingScript,
     }, new P2PKH().unlock(key)))
+    })
 
     for (let i = 0; i < batches; i++) {
       // for each batch we create an output of 1000 satoshis
@@ -58,12 +59,12 @@ export default async function (req: Request, res: Response) {
     const fundsTxId = fundsTx.id('hex')
 
     // Let's ensure this gets out quickly
-    // const fundsTxResponse = await fundsTx.broadcast(Arc)
+    const fundsTxResponse = await fundsTx.broadcast(Arc)
 
-    // if (fundsTxResponse.status !== 'success') {
-    //   res.send({ error: 'fundsTxResponse', fundsTxResponse })
-    //   return
-    // }
+    if (fundsTxResponse.status !== 'success') {
+      res.send({ error: 'fundsTxResponse', fundsTxResponse })
+      return
+    }
 
     // this tx is now valid and can be used as inputs to the token creation txs
 
@@ -100,11 +101,12 @@ export default async function (req: Request, res: Response) {
     // Broadcast transactions
     const responses = await Arc.broadcastMany(tokenCreationTxs)
 
-    const tokenTxs = responses.map((txResponse: { txid: string }, i) => {
+    const tokenTxs = responses.map((txResponse: any, i) => {
+      const tokenTx  = tokenCreationTxs[i]
+      tokenTx.merklePath = new MerklePath(1, [[{ offset: 0, hash: txResponse.txid }]])
       return {
         txid: txResponse.txid,
-        rawtx: tokenCreationTxs[i].toHex(),
-        beef: tokenCreationTxs[i].toHexBEEF(),
+        beef: tokenTx.toHexBEEF(),
         arc: txResponse,
       }
     })
@@ -114,8 +116,9 @@ export default async function (req: Request, res: Response) {
 
     const tokenUtxos = secretPairs.map((secret, idx) => {
       const vout = idx % 957
-      const txid = tokenTxs[vout].txid
-      const script = tokenCreationTxs[vout].outputs[vout].lockingScript.toHex()
+      const creationTx = Math.floor(idx / 957)
+      const txid = tokenTxs[creationTx].txid
+      const script = tokenCreationTxs[creationTx].outputs[vout].lockingScript.toHex()
       const satoshis = 1
       const fileHash = null
       const confirmed = false
@@ -131,9 +134,9 @@ export default async function (req: Request, res: Response) {
     })
 
     // Store token data
-    const utxosDbResponse = await db.collection('utxos').insertMany(tokenUtxos)
+    const utxosDbResponse = await db.collection('utxos').insertMany(tokenUtxos, { bypassDocumentValidation: true, ordered: false, forceServerObjectId: true })
 
-    res.send({ txid: fundsTxId, number: batches * 957, txDbResponse, utxosDbResponse })
+    res.send({ txid: tokenUtxos[0].txid, number: batches * 957, txDb: txDbResponse.insertedCount, utxosDb: utxosDbResponse.insertedCount })
   } catch (error) {
     console.log(error)
     res.status(500)

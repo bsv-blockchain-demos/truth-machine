@@ -13,6 +13,7 @@
 
 import { MongoClient } from 'mongodb'
 import dotenv from 'dotenv'
+import { NETWORK } from './arc'
 dotenv.config()
 
 // Load database configuration from environment variables
@@ -46,4 +47,4 @@ connectToDatabase()
  * import db from '../db'
  * const result = await db.collection('txs').findOne({ txid })
  */
-export default client.db(DB_NAME)
+export default client.db(DB_NAME + (NETWORK === 'test' ? '' : '-mainnet'))

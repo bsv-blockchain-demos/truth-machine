@@ -1,6 +1,6 @@
 {
   "name": "truth-machine-demo",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@bsv/sdk": "^1.6.18",
+    "@bsv/templates": "^1.1.0",
     "dotenv": "^16.4.7",
     "qrcode.react": "^4.2.0",
     "react": "^19.0.0",

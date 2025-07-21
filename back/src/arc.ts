@@ -13,7 +13,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 // Environment variables for ARC configuration
-export const { NETWORK, DOMAIN, CALLBACK_TOKEN } = process.env
+export const { NETWORK, DOMAIN, CALLBACK_TOKEN, ARC_API_KEY, TEST_ARC_API_KEY } = process.env
 
 /**
  * ARC client configuration options
@@ -23,6 +23,7 @@ export const { NETWORK, DOMAIN, CALLBACK_TOKEN } = process.env
 const options = {
     callbackUrl: 'https://' + DOMAIN + '/callback',
     callbackToken: CALLBACK_TOKEN,
+    apiKey: NETWORK === 'main' ? ARC_API_KEY : TEST_ARC_API_KEY,
 }
 
 export const ARC_URL = (NETWORK === 'main') 

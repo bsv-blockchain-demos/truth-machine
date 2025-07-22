@@ -59,7 +59,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }} # Only push on push events, not PRs
           tags: |
             docker.io/bsvb/truth-machine-demo:${{ github.sha }}
-            docker.io/bsvb/truth-machine:${{ needs.get_tag.outputs.deployment_tag }}
+            docker.io/bsvb/truth-machine-demo:${{ needs.get_tag.outputs.deployment_tag }}
 
       # Step 5: Build and push the backend Docker image
       - name: Build and push frontend Docker image

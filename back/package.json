@@ -1,6 +1,6 @@
 {
   "name": "truth-machine",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch ./src/index.ts",
@@ -12,7 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@bsv/sdk": "^1.6.18",
+    "@bsv/sdk": "^1.6.24",
     "@bsv/templates": "^1.1.0",
     "@types/express": "^5.0.0",
     "cors": "^2.8.5",

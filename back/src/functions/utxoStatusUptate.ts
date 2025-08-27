@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import db from '../db'
 import { MerklePath, Beef } from '@bsv/sdk'
 import { ARC_URL, NETWORK } from '../arc'
+import woc from '../woc'
 
 async function updateRecords(txid: string, merklePath: string, arc: any = { status: 'WoC retrieved' }): Promise<void> {
     const document = await db.collection('txs').findOne({ txid })
@@ -18,8 +19,7 @@ async function updateRecords(txid: string, merklePath: string, arc: any = { stat
 
 async function getBeefFromWoc(txid: string): Promise<string | null> {
     try {
-        const woc = await (await fetch(`https://api.whatsonchain.com/v1/bsv/${NETWORK}/tx/${txid}/beef`)).text()
-        return woc
+        return await woc.getBeef(txid)
     } catch (error) {
         console.error('Failed to get Beef from WhatOnChain', error)
         return null

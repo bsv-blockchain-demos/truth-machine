@@ -11,14 +11,12 @@ import {
    * Represents an WhatsOnChain transaction broadcaster.
    */
   export default class BitailsBroadcaster implements Broadcaster {
-    readonly network: string
     private readonly URL: string
     private readonly httpClient: HttpClient
   
     /**
      * Constructs an instance of the WhatsOnChain broadcaster.
      *
-     * @param {'main' | 'test' | 'stn'} network - The BSV network to use when calling the WhatsOnChain API.
      * @param {HttpClient} httpClient - The HTTP client used to make requests to the API.
      */
     constructor(

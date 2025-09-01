@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 import { fromUtxo, MerklePath, P2PKH, SatoshisPerKilobyte, Transaction } from '@bsv/sdk'
 import HashPuzzle from '../HashPuzzle'
 import db from '../db'
-import Arc from '../arc'
+import { ArcTaal } from '../arc'
 import { address, key } from '../functions/address'
 import woc from '../woc'
 
@@ -59,7 +59,7 @@ export default async function (req: Request, res: Response) {
     const fundsTxId = fundsTx.id('hex')
 
     // Let's ensure this gets out quickly
-    const fundsTxResponse = await fundsTx.broadcast(Arc)
+    const fundsTxResponse = await fundsTx.broadcast(ArcTaal)
 
     if (fundsTxResponse.status !== 'success') {
       res.send({ error: 'fundsTxResponse', fundsTxResponse })
@@ -99,7 +99,7 @@ export default async function (req: Request, res: Response) {
     }
 
     // Broadcast transactions
-    const responses = await Arc.broadcastMany(tokenCreationTxs)
+    const responses = await ArcTaal.broadcastMany(tokenCreationTxs)
 
     const tokenTxs = responses.map((txResponse: any, i) => {
       const tokenTx  = tokenCreationTxs[i]

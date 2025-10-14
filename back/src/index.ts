@@ -9,6 +9,9 @@ const app: Application = express()
 
 app.use(cors({ origin: '*' }))
 
+// ADD THIS LINE - Handle preflight requests
+app.options('*', cors())
+
 // Fund the treasury by splitting funds associated 
 // with a regular address into a number of 1 sat outputs.
 app.get('/fund/:number', fund)

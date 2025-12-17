@@ -138,6 +138,7 @@ docker compose up
 ### Treasury Management
 - `GET /api/checkTreasury` - Get treasury status
 - `POST /api/fund/:tokens` - Create write tokens
+- `POST /api/consolidate` - Consolidate unused tokens back to treasury
 
 ## Security Features
 
@@ -145,6 +146,42 @@ docker compose up
 - **SPV Proofs**: Simplified Payment Verification
 - **Hash Verification**: SHA-256 file integrity checking
 - **Immutable Timestamping**: Blockchain-backed time proofs
+
+## Version History
+
+### v1.3.1 - Fee Structure Update
+
+**Breaking Change**: Updated to accommodate new network fee requirements (100 satoshis/kb)
+
+#### What Changed
+- **Increased Token Value**: Each write token now contains 10 satoshis (previously 1 satoshi)
+  - This ensures sufficient fees for upload transactions under the 100 sats/kb fee model
+
+- **New Consolidation Endpoint**: `GET /consolidate`
+  - Revokes all existing unused tokens from the database
+  - Consolidates them back into a single UTXO in the treasury
+  - Enables clean reissuance with updated token values
+
+#### Migration Path
+If you have existing tokens created before v1.3.1:
+
+1. **Consolidate existing tokens**:
+   ```bash
+   curl http://localhost:3030/consolidate
+   ```
+   This will gather all unused tokens and return them to the treasury as a single UTXO.
+
+2. **Create new tokens with updated value**:
+   ```bash
+   curl http://localhost:3030/fund/100
+   ```
+   New tokens will automatically use the 10 satoshi value.
+
+#### Technical Details
+- The consolidation process spends all confirmed, unused hash-locked UTXOs
+- Each token is unlocked using its stored secret and combined into one output
+- Consolidated UTXOs are marked as spent in the database
+- The treasury receives back all satoshis minus network fees
 
 ## Development
 

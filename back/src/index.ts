@@ -1,5 +1,5 @@
 import express, { Application } from 'express'
-import { upload, download, callback, integrity, fund, checkTreasury, utxoStatusUpdate, allFunds } from './functions'
+import { upload, download, callback, integrity, fund, checkTreasury, utxoStatusUpdate, allFunds, consolidate } from './functions'
 import dotenv from 'dotenv'
 import cors from 'cors'
 dotenv.config()
@@ -37,6 +37,9 @@ app.use(express.json()).get('/checkTreasury', checkTreasury)
 
 // Update utxo status
 app.get('/utxoStatusUpdate', utxoStatusUpdate)
+
+// Consolidate all available utxos into a single output
+app.get('/consolidate', consolidate)
 
 app.listen(PORT, () => {
   console.log(`http://localhost:${PORT}`);

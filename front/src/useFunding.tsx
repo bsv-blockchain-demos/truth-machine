@@ -12,6 +12,7 @@ interface FundingContextType {
     getFundingInfo: () => Promise<void>
     createTokens: (tokens: number) => Promise<void>
     utxoStatusUpdate: () => Promise<void>
+    consolidate: () => Promise<void>
 }
 
 const FundingContext = createContext<FundingContextType | undefined>(undefined)
@@ -65,6 +66,7 @@ export const FundingProvider: React.FC<FundingProviderProps> = ({ children }) =>
 
     async function utxoStatusUpdate() {
         try {
+            setLoading(true)
             const response = await (await fetch(API_URL + '/utxoStatusUpdate')).json()
             console.info('UTXO Status Update: ', response)
             if(response.success && response.updated.length > 0) {
@@ -72,10 +74,27 @@ export const FundingProvider: React.FC<FundingProviderProps> = ({ children }) =>
             }
         } catch (error) {
             console.error('Failed to update UTXO status', error)
+        } finally {
+            setLoading(false)
         }
     }
 
-    const contextValue = useMemo(() => ({ fundingInfo, loading, getFundingInfo, createTokens, utxoStatusUpdate }), [fundingInfo, loading, getFundingInfo, createTokens, utxoStatusUpdate])
+    async function consolidate() {
+        try {
+            setLoading(true)
+            const response = await (await fetch(API_URL + '/consolidate')).json()
+            console.info('Consolidate: ', response)
+            if(response.success && response.updated.length > 0) {
+                await getFundingInfo()
+            }
+        } catch (error) {
+            console.error('Failed to consolidate', error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const contextValue = useMemo(() => ({ fundingInfo, loading, getFundingInfo, createTokens, utxoStatusUpdate, consolidate }), [fundingInfo, loading, getFundingInfo, createTokens, utxoStatusUpdate, consolidate])
 
     return (
         <FundingContext.Provider value={contextValue}>

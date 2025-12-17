@@ -54,7 +54,7 @@ export default async function (req: Request, res: Response) {
       })
     }
 
-    await fundsTx.fee(new SatoshisPerKilobyte(1))
+    await fundsTx.fee(new SatoshisPerKilobyte(100))
     await fundsTx.sign()
     const fundsTxId = fundsTx.id('hex')
 
@@ -93,7 +93,7 @@ export default async function (req: Request, res: Response) {
           lockingScript: new HashPuzzle().lock(pair.hash)
         })
       })
-      await tx.fee(new SatoshisPerKilobyte(1))
+      await tx.fee(new SatoshisPerKilobyte(100))
       await tx.sign()
       tokenCreationTxs.push(tx)
     }
@@ -122,6 +122,7 @@ export default async function (req: Request, res: Response) {
       const satoshis = 1
       const fileHash = null
       const confirmed = false
+      const spent = false
       return {
         txid,
         vout,
@@ -130,6 +131,7 @@ export default async function (req: Request, res: Response) {
         secret,
         fileHash,
         confirmed,
+        spent,
       }
     })
 

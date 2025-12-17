@@ -17,7 +17,7 @@ import { useFunding } from './useFunding'
  * - A UI to specify the number of tokens to create.
  */
 export default function Funding() {
-    const { getFundingInfo, fundingInfo, loading, createTokens, utxoStatusUpdate } = useFunding()
+    const { getFundingInfo, fundingInfo, loading, createTokens, utxoStatusUpdate, consolidate } = useFunding()
     const [tokenNumber, setTokenNumber] = useState(1)
 
     // Initialize treasury information on component mount
@@ -47,5 +47,6 @@ export default function Funding() {
         <br /><br />
         <label>Manual Token Status Update</label>
         <button onClick={utxoStatusUpdate}>Check Tokens</button>
+        <button onClick={consolidate}>Consolidate Tokens</button>
     </>
 }

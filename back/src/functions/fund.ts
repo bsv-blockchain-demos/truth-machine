@@ -75,7 +75,7 @@ export default async function (req: Request, res: Response) {
     })
     for (const pair of secretPairs) {
       tx.addOutput({
-        satoshis: 1,
+        satoshis: 10,
         lockingScript: new HashPuzzle().lock(pair.hash)
       })
     }
@@ -83,7 +83,7 @@ export default async function (req: Request, res: Response) {
       change: true,
       lockingScript: new P2PKH().lock(address)
     })
-    await tx.fee(new SatoshisPerKilobyte(1))
+    await tx.fee(new SatoshisPerKilobyte(100))
     await tx.sign()
 
     // Broadcast transaction

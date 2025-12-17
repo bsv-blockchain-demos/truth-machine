@@ -11,7 +11,7 @@ services:
     environment:
       NETWORK: "test"
       DB_NAME: "truth-machine"
-      FUNDING_WIF: "KwEnbvYVJZrpf1HTLEb3jo9Wz19r2uzPQ2waPTPX56vfij8nd7vH"
+      FUNDING_WIF: "KyKPRwCJk7vX5ocw8eY2JMACZyNFSavx71P4tq8ngNZ7mD62aEiy"
       DOMAIN: "your-domain.com"
       CALLBACK_TOKEN: "tvhbeVfbF3nUrZTmU" # replace with your own random string
       MONGO_URI: "mongodb://mongo:27017"
@@ -29,25 +29,8 @@ services:
     environment:
       VITE_API_URL: http://truth-machine-backend:3030
 
-  truth-machine-backend:
-    build:
-      context: back
-      dockerfile: Dockerfile
-    container_name: truth-machine-backend
-    restart: always
-    ports:
-      - "3030:3030"
-    environment:
-      NETWORK: "test"
-      DB_NAME: "truth-machine"
-      FUNDING_WIF: "LzKDHiboYPoBcKK4T5mfC9eyrGQDy2RasnDwjw7KMC4cjyLGN3oP" # This is a throwaway test key
-      DOMAIN: "your-domain.com"
-      CALLBACK_TOKEN: "tvhbeVfbF3nUrZTmU"
-      MONGO_URI: "mongodb://mongo:27017"
-      PORT: 3030
-
   mongo:
-    image: mongo:6-jammy
+    image: mongo:6
     ports:
       - '28017:27017'
     volumes:

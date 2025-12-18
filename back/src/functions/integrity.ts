@@ -93,7 +93,7 @@ export default async function (req: Request, res: Response) {
         
         // Extract transaction from BEEF and verify file hash commitment
         const tx = Transaction.fromHexBEEF(beef)
-        const txFileHash = Utils.toUTF8(Utils.toArray(tx.outputs[0].lockingScript.toASM().split(' ')[2], 'hex'))
+        const txFileHash = tx.outputs[0].lockingScript.toASM().split(' ')[2]
 
         const matchedCommitment = txFileHash === fileHash
         

@@ -50,9 +50,9 @@ export default async function (req: Request, res: Response) {
     // Check funding availability
     const utxos = await woc.getUtxos(address)
     const beef = await woc.getBeef(utxos[0].txid)
-    const max = utxos.reduce((a, b) => a + b.satoshis - 1, 0)
+    const max = utxos.reduce((a, b) => a + b.satoshis - 100, 0)
 
-    if (max < number) {
+    if (max < (number * 13)) {
       res.send({ error: 'not enough satoshis', number, utxos })
       return 
     }
@@ -75,7 +75,7 @@ export default async function (req: Request, res: Response) {
     })
     for (const pair of secretPairs) {
       tx.addOutput({
-        satoshis: 10,
+        satoshis: 13,
         lockingScript: new HashPuzzle().lock(pair.hash)
       })
     }
@@ -105,7 +105,7 @@ export default async function (req: Request, res: Response) {
         txid,
         vout,
         script: tx.outputs[vout].lockingScript.toHex(),
-        satoshis: 1,
+        satoshis: 13,
         secret,
         fileHash: null,
         confirmed: false,

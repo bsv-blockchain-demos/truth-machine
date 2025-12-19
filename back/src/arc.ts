@@ -35,6 +35,7 @@ class SuperArc implements Broadcaster {
     async broadcast(tx: Transaction): Promise<BroadcastResponse | BroadcastFailure> {
         for (const broadcaster of this.broadcasters) {
             const response = await broadcaster.broadcast(tx)
+            console.info(response)
             if (response.status === 'success') {
                 return response
             }

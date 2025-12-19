@@ -76,7 +76,13 @@ export default async function (req: Request, res: Response) {
       console.log({ fileHash })
       
       // For a 32 byte hash fees will always be 10
-      const utxo = await db.collection('utxos').findOneAndUpdate({ fileHash: null, confirmed: true, invalid: null }, { $set: { fileHash } })
+      const utxo = await db.collection('utxos').findOneAndUpdate({ 
+        fileHash: null, 
+        confirmed: true, 
+        invalid: null,
+        spent: { $ne: true }
+      }, 
+      { $set: { fileHash, spent: true } })
       console.log({ utxo })
 
       // Create transaction with file hash commitment

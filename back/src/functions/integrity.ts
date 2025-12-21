@@ -46,11 +46,10 @@
  */
 
 import { Request, Response } from 'express'
-import { Transaction, WhatsOnChain, Beef, Utils, MerklePath } from '@bsv/sdk'
+import { Transaction, Beef, MerklePath } from '@bsv/sdk'
 import db from '../db'
 import dotenv from 'dotenv'
-import { ChaintracksServiceClient } from '@bsv/wallet-toolbox/out/src/services/chaintracker'
-import { ChaintracksChainTracker } from '@bsv/wallet-toolbox/out/src/services/chaintracker/ChaintracksChainTracker'
+import { ChaintracksServiceClient, ChaintracksChainTracker } from '@bsv/wallet-toolbox'
 dotenv.config()
 const { NETWORK } = process.env
 const chaintracksURL = NETWORK === 'main' ? 'https://chaintracks-us-1.bsvb.tech' : 'https://chaintracks-testnet-us-1.bsvb.tech'

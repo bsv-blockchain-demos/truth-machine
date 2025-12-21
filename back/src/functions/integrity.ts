@@ -49,10 +49,14 @@ import { Request, Response } from 'express'
 import { Transaction, WhatsOnChain, Beef, Utils, MerklePath } from '@bsv/sdk'
 import db from '../db'
 import dotenv from 'dotenv'
+import { ChaintracksServiceClient } from '@bsv/wallet-toolbox/out/src/services/chaintracker'
+import { ChaintracksChainTracker } from '@bsv/wallet-toolbox/out/src/services/chaintracker/ChaintracksChainTracker'
 dotenv.config()
 const { NETWORK } = process.env
+const chaintracksURL = NETWORK === 'main' ? 'https://chaintracks-us-1.bsvb.tech' : 'https://chaintracks-testnet-us-1.bsvb.tech'
 
-const blockHeaderService = new WhatsOnChain(NETWORK as "main" | "test" | "stn")
+const ctsc = new ChaintracksServiceClient(NETWORK as 'main' | 'test', chaintracksURL)
+const ct = new ChaintracksChainTracker(NETWORK as 'main' | 'test', ctsc)
 
 const defineSuccess = ['SENT_TO_NETWORK', 'ACCEPTED_BY_NETWORK', 'SEEN_ON_NETWORK', 'MINED']
 const defineFailure = ['SEEN_IN_ORPHAN_MEMPOOL', 'DOUBLE_SPEND_ATTEMPTED', 'REJECTED']
@@ -100,7 +104,7 @@ export default async function (req: Request, res: Response) {
         // Perform SPV verification using WhatsOnChain - ONLY for the tip transaction
         let inBlock, broadcast
         try {
-            inBlock = await tx.merklePath?.verify(txid, blockHeaderService)
+            inBlock = await tx.merklePath?.verify(txid, ct)
         } catch (error) {
             console.error('SPV verification error:', error)
         }
@@ -128,7 +132,7 @@ export default async function (req: Request, res: Response) {
             return
         }
 
-        const currentHeight = await blockHeaderService.currentHeight()
+        const currentHeight = await ct.currentHeight()
         const height = tx.merklePath?.blockHeight
         const depth = currentHeight - height
 

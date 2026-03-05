@@ -51,7 +51,7 @@ import HashPuzzle from '../HashPuzzle'
 import Arc from '../arc'
 import dotenv from 'dotenv'
 dotenv.config()
-const Data = OpReturn.default
+const Data = OpReturn
 
 const { NETWORK } = process.env
 

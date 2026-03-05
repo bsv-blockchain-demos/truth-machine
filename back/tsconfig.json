@@ -20,7 +20,8 @@
 
         // Disallow features that require cross-file awareness
         "isolatedModules": true,
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "skipLibCheck": true
     },
     "include": ["src/**/*.ts"]
 }   

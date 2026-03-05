@@ -12,14 +12,19 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@bsv/sdk": "^1.9.24",
-    "@bsv/templates": "^1.1.0",
-    "@bsv/wallet-toolbox": "^1.7.17",
+    "@bsv/sdk": "^2.0.5",
+    "@bsv/templates": "^1.4.0",
+    "@bsv/wallet-toolbox": "^2.1.2",
     "@types/express": "^5.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.1",
     "mongodb": "^6.13.0"
+  },
+  "overrides": {
+    "@bsv/templates": {
+      "@bsv/sdk": "$@bsv/sdk"
+    }
   },
   "devDependencies": {
     "@types/node": "^22.13.4",

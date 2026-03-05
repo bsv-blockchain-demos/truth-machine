@@ -84,7 +84,7 @@ function Upload() {
             {response.txid && (
                 <div>
                     <h3>Upload successful</h3>
-                    <p style={{ overflow: 'hidden' }}>{response?.txid}</p>
+                    <p style={{ wordBreak: 'break-all' }}>{response?.txid}</p>
                     <p><a target='_BLANK' href={'https://' + (response.network !== 'main' ? 'test.' : '') + 'whatsonchain.com/tx/' + response.txid}>🔗 whats on chain</a></p>
                 </div>
             )}

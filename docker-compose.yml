@@ -9,7 +9,7 @@ services:
     ports:
       - "3030:3030"
     environment:
-      NETWORK: "test"
+      NETWORK: "main"
       DB_NAME: "truth-machine"
       FUNDING_WIF: "KyKPRwCJk7vX5ocw8eY2JMACZyNFSavx71P4tq8ngNZ7mD62aEiy"
       DOMAIN: "your-domain.com"

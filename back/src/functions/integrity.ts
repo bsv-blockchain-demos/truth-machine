@@ -96,7 +96,8 @@ export default async function (req: Request, res: Response) {
         
         // Extract transaction from BEEF and verify file hash commitment
         const tx = Transaction.fromHexBEEF(beef)
-        const txFileHash = tx.outputs[0].lockingScript.toASM().split(' ')[2]
+        const scriptHex = tx.outputs[0].lockingScript.toHex()
+        const txFileHash = scriptHex.slice(-64)
 
         const matchedCommitment = txFileHash === fileHash
         
@@ -110,7 +111,7 @@ export default async function (req: Request, res: Response) {
         if (!inBlock) {
             try {
                 let arcSuccess = false
-                if (defineSuccess.includes(arc?.[0]?.message)) {
+                if (defineSuccess.includes(arc?.[0]?.message?.trim())) {
                     arcSuccess = true
                 }
                 console.log({ arcSuccess, status: arc?.[0] })

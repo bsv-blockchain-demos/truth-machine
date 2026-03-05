@@ -49,13 +49,23 @@ export default async function (req: Request, res: Response) {
 
     // Check funding availability
     const utxos = await woc.getUtxos(address)
-    const beef = await woc.getBeef(utxos[0].txid)
-    const max = utxos.reduce((a, b) => a + b.satoshis - 100, 0)
 
-    if (max < (number * 13)) {
-      res.send({ error: 'not enough satoshis', number, utxos })
-      return 
+    if (utxos.length === 0) {
+      res.send({ error: 'no utxos found for address', address })
+      return
     }
+
+    // Pick the largest UTXO to avoid dust inputs
+    utxos.sort((a, b) => b.satoshis - a.satoshis)
+    const utxo = utxos[0]
+
+    const minRequired = (number * 13) + 100
+    if (utxo.satoshis < minRequired) {
+      res.send({ error: 'not enough satoshis in largest UTXO', number, available: utxo.satoshis, required: minRequired })
+      return
+    }
+
+    const beef = await woc.getBeef(utxo.txid)
 
     // Generate unique secret-hash pairs for each token
     const secretPairs = []
@@ -70,7 +80,7 @@ export default async function (req: Request, res: Response) {
     const tx = new Transaction()
     tx.addInput({
       sourceTransaction,
-      sourceOutputIndex: utxos[0].vout,
+      sourceOutputIndex: utxo.vout,
       unlockingScriptTemplate: new P2PKH().unlock(key)
     })
     for (const pair of secretPairs) {
@@ -116,6 +126,6 @@ export default async function (req: Request, res: Response) {
   } catch (error) {
     console.log(error)
     res.status(500)
-    res.send({ error })
+    res.send({ error: error.message || error })
   }
 }

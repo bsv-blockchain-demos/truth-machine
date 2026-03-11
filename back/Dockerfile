@@ -1,17 +1,18 @@
 # Stage 1: Build the application
-FROM node:20 AS builder
+FROM node:22-alpine3.23 AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm install\
-  && npm install -g typescript
+RUN npm ci
 COPY . .
-RUN tsc
+RUN npm run build
 
 # Stage 2: Run the application
-FROM node:20
+FROM node:22-alpine3.23
+RUN apk --no-cache upgrade
 WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY package*.json ./
-RUN npm install --production
+RUN npm ci --omit=dev
 EXPOSE 3030
-CMD ["npm", "run", "start"]
+USER node
+CMD ["node", "./dist/index.js"]

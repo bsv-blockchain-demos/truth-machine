@@ -56,6 +56,8 @@ jobs:
           context: ./front # Build context (root directory, adjust if Dockerfile is elsewhere)
           file: ./front/Dockerfile # Path to Dockerfile
           push: ${{ github.event_name != 'pull_request' }} # Only push on push events, not PRs
+          build-args: |
+            VITE_API_URL=https://truth-machine-api.bsvb.tech
           tags: |
             ghcr.io/bsv-blockchain-demos/truth-machine-front:${{ github.sha }}
             ghcr.io/bsv-blockchain-demos/truth-machine-front:${{ needs.get_tag.outputs.deployment_tag }}

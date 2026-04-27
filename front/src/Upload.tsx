@@ -39,6 +39,8 @@ function Upload() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/octet-stream',
+                        'X-Original-Content-Type': selectedFile.type || 'application/octet-stream',
+                        'X-Original-Filename': selectedFile.name,
                     },
                     body: selectedFile,
                 })

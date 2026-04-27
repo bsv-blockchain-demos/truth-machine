@@ -121,7 +121,8 @@ export default async function (req: Request, res: Response) {
       beef: tx.toHexBEEF(),  // Initial BEEF without BUMPs
       arc: [initialResponse], // ARC responses track BUMP updates
       file,
-      fileType: req.headers['content-type'],
+      fileType: req.headers['x-original-content-type'] || req.headers['content-type'],
+      fileName: req.headers['x-original-filename'] || undefined,
       time,
     }
     await db.collection('txs').insertOne(document)

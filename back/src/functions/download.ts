@@ -26,7 +26,7 @@ export default async function (req: Request, res: Response) {
     try {
         // Retrieve file by transaction ID or hash
         const { id } = req.params
-        const { file, time, fileType } = await db.collection('txs').findOne({
+        const { file, time, fileType, fileName } = await db.collection('txs').findOne({
             $or: [
                 { txid: id },
                 { fileHash: id }
@@ -39,7 +39,7 @@ export default async function (req: Request, res: Response) {
         const extension = fileType.split('/')[1]
         res.setHeader('Content-Length', file.buffer.length)
         res.setHeader('Content-Type', fileType)
-        res.setHeader('Content-Disposition', `attachment; filename=${id}-${time}.${extension}`)
+        res.setHeader('Content-Disposition', `attachment; filename=${fileName || `${id}-${time}.${extension}`}`)
         
         // Send file content
         res.send(file.buffer)

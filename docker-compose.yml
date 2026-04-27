@@ -22,12 +22,12 @@ services:
     build:
       context: front
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:3030
     container_name: truth-machine-frontend
     restart: always
     ports:
       - "3000:3000"
-    environment:
-      VITE_API_URL: http://truth-machine-backend:3030
 
   mongo:
     image: mongo:6

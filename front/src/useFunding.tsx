@@ -71,9 +71,7 @@ export const FundingProvider: React.FC<FundingProviderProps> = ({ children }) =>
             setLoading(true)
             const response = await (await fetch(API_URL + '/utxoStatusUpdate')).json()
             console.info('UTXO Status Update: ', response)
-            if(response.success && response.updated.length > 0) {
-                await getFundingInfo()
-            }
+            await getFundingInfo()
         } catch (error) {
             console.error('Failed to update UTXO status', error)
         } finally {
@@ -86,9 +84,7 @@ export const FundingProvider: React.FC<FundingProviderProps> = ({ children }) =>
             setLoading(true)
             const response = await (await fetch(API_URL + '/consolidate')).json()
             console.info('Consolidate: ', response)
-            if(response.success && response.updated.length > 0) {
-                await getFundingInfo()
-            }
+            await getFundingInfo()
         } catch (error) {
             console.error('Failed to consolidate', error)
         } finally {

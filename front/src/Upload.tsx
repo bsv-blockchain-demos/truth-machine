@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useFunding } from './useFunding'
 
 const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:3030'
@@ -9,6 +9,16 @@ function Upload({ onUploadComplete }: { onUploadComplete?: () => void }) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const { getFundingInfo } = useFunding()
+    const [copied, setCopied] = useState(false)
+    const copyTimeout = useRef<ReturnType<typeof setTimeout>>(null)
+
+    const copyTxid = useCallback(() => {
+        navigator.clipboard.writeText(response.txid).then(() => {
+            setCopied(true)
+            if (copyTimeout.current) clearTimeout(copyTimeout.current)
+            copyTimeout.current = setTimeout(() => setCopied(false), 2000)
+        })
+    }, [response.txid])
 
     const handleDrag = useCallback((e: React.DragEvent<HTMLElement>) => {
             e.preventDefault()
@@ -85,12 +95,25 @@ function Upload({ onUploadComplete }: { onUploadComplete?: () => void }) {
                             onDrop={handleDrop}
                             className="tm-dropzone"
                         >
+                            <span className="tm-corner tm-corner--tl" />
+                            <span className="tm-corner tm-corner--tr" />
+                            <span className="tm-corner tm-corner--bl" />
+                            <span className="tm-corner tm-corner--br" />
                             {selectedFile ? (
-                                <p style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <p className="tm-dropzone__instruction tm-dropzone__instruction--file" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {selectedFile.name}
                                 </p>
                             ) : (
-                                <p>Drag &amp; drop a file here or click to select one</p>
+                                <>
+                                    <svg className="tm-dropzone__glyph" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="var(--tm-ink2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M20 2H8a2 2 0 00-2 2v24a2 2 0 002 2h16a2 2 0 002-2V8z" />
+                                        <polyline points="20,2 20,8 26,8" />
+                                        <line x1="10" y1="16" x2="22" y2="16" />
+                                        <line x1="10" y1="20" x2="22" y2="20" />
+                                        <line x1="10" y1="24" x2="18" y2="24" />
+                                    </svg>
+                                    <p className="tm-dropzone__instruction">Drag and drop a file or click to browse</p>
+                                </>
                             )}
                         </div>
                     </label>
@@ -100,26 +123,32 @@ function Upload({ onUploadComplete }: { onUploadComplete?: () => void }) {
                         Upload
                     </button>
                 </div>
+                {response.txid && (
+                    <div className="tm-receipt">
+                        <h3>Upload successful</h3>
+                        <p className="tm-receipt__id-row">
+                            <span className="tm-verdict__label tm-verdict__label--bold">TX ID: </span>{response?.txid}<button className="tm-copy-icon" onClick={copyTxid} title={copied ? 'Copied!' : 'Copy File ID'}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    {copied
+                                        ? <path d="M20 6L9 17l-5-5" />
+                                        : <><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></>
+                                    }
+                                </svg>
+                            </button>
+                        </p>
+                        <p><a target='_BLANK' href={'https://' + (response.network !== 'main' ? 'test.' : '') + 'whatsonchain.com/tx/' + response.txid}>View on WhatsOnChain</a></p>
+                    </div>
+                )}
                 {error && (
                     <pre className="tm-error">{error}</pre>
                 )}
                 <details className="tm-api-details">
-                    <summary>API details</summary>
+                    <summary>
+                        <svg className="tm-chevron" width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><path d="M2 1l4 3-4 3z" /></svg>
+                        API details
+                    </summary>
                     <p>Send file binary streams to the <code>/upload</code> endpoint.</p>
                 </details>
-            </div>
-            <div className="tm-upload-grid__right">
-                {response.txid ? (
-                    <div className="tm-receipt">
-                        <h3>Upload successful</h3>
-                        <p>{response?.txid}</p>
-                        <p><a target='_BLANK' href={'https://' + (response.network !== 'main' ? 'test.' : '') + 'whatsonchain.com/tx/' + response.txid}>View on WhatsOnChain</a></p>
-                    </div>
-                ) : (
-                    <div className="tm-verdict-placeholder">
-                        Awaiting submission.
-                    </div>
-                )}
             </div>
         </div>
     )

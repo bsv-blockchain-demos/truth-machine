@@ -81,33 +81,27 @@ function App() {
                         Proof that a file existed <em>here,</em> <em>now,</em> and <em>exactly as it is.</em>
                     </h2>
                     <p className="tm-hero__sub">
-                        Upload a file. Its cryptographic hash is written to the BSV blockchain — an immutable, timestamped record anyone can verify.
+                        Upload a file. Its cryptographic hash is written to the BSV blockchain. An immutable, timestamped record anyone can verify.
                     </p>
                 </section>
-
-                <nav className="tm-stepper-bar" aria-label="Progress">
-                    <div className={`tm-step ${uploadComplete ? 'tm-step--done' : 'tm-step--active'}`}>
-                        <span className="tm-step__number">{uploadComplete ? '✓' : '1'}</span>
-                        <span className="tm-step__label">Upload File</span>
-                    </div>
-                    <div className={`tm-stepper-bar__line ${uploadComplete ? 'tm-stepper-bar__line--done' : ''}`} />
-                    <div className={`tm-step ${uploadComplete ? 'tm-step--active' : 'tm-step--upcoming'}`}>
-                        <span className="tm-step__number">2</span>
-                        <span className="tm-step__label">Verify &amp; Download</span>
-                    </div>
-                </nav>
 
                 <main className="tm-app__sections">
                     <section className="tm-section">
                         <div className="tm-section__header">
-                            <h3 className="tm-section__title">1. Upload File</h3>
+                            <div className={`tm-step ${uploadComplete ? 'tm-step--done' : 'tm-step--active'}`}>
+                                <span className="tm-step__number">{uploadComplete ? '✓' : '1'}</span>
+                            </div>
+                            <h2 className="tm-section__title">Upload File</h2>
                         </div>
                         <Upload onUploadComplete={() => setUploadComplete(true)} />
                     </section>
 
                     <section className="tm-section">
                         <div className="tm-section__header">
-                            <h3 className="tm-section__title">2. Verify &amp; Download</h3>
+                            <div className={`tm-step ${uploadComplete ? 'tm-step--active' : 'tm-step--upcoming'}`}>
+                                <span className="tm-step__number">2</span>
+                            </div>
+                            <h2 className="tm-section__title">Verify &amp; Download</h2>
                         </div>
                         <Download />
                     </section>
@@ -125,7 +119,6 @@ function App() {
                         <img src={seal} alt="Truth Machine" className="tm-footer__logo" />
                         <span className="tm-footer__name">Truth Machine</span>
                     </div>
-                    <a href="https://github.com/bsv-blockchain" target="_blank" rel="noopener noreferrer" className="tm-footer__center">BSV BLOCKCHAIN</a>
                     <a
                         href="https://github.com/bsv-blockchain-demos/truth-machine"
                         target="_blank"

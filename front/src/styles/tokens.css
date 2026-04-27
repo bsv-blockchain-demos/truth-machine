@@ -13,6 +13,10 @@
   --tm-fail:         #c62828;
   --tm-warn:         #b8860b;
   --tm-white:        #ffffff;
+  --tm-paper:        #faf6ef;
+  --tm-muted:        #6b6560;
+  --tm-ink2:         #6b6355;
+  --tm-accent-2:     #b8960b;
 
   /* ── Type ── */
   --tm-font-serif:   'Playfair Display', Georgia, 'Times New Roman', serif;

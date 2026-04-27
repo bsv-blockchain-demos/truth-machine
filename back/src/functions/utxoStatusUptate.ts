@@ -49,9 +49,8 @@ export default async function (req: Request, res: Response) {
                 console.info('WoC BEEF retrieval for: ' + txid)
                 const woc = await getBeefFromWoc(txid)
                 if (!woc || woc.startsWith('failed') || woc.startsWith('Internal')) {
-                    console.error('Failed to get Merkle Path - setting invalid: ' + txid)
-                    await setInvalid(txid)
-                    return 'updated to invalid ' + txid
+                    console.warn('Could not get Merkle Path from WoC, will retry later: ' + txid)
+                    return 'pending ' + txid
                 }
                 try {
                     const beef = Beef.fromString(woc, 'hex')

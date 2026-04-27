@@ -7,6 +7,7 @@ function Upload() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [response, setResponse] = useState({ txid: '', network: '' })
     const [loading, setLoading] = useState(false)
+    const [error, setError] = useState('')
     const { getFundingInfo } = useFunding()
 
     const handleDrag = useCallback((e: React.DragEvent<HTMLElement>) => {
@@ -33,17 +34,29 @@ function Upload() {
         if (selectedFile) {
             try {
                 setLoading(true)
-                const response = await (await fetch(API_URL + '/upload', {
+                setError('')
+                const res = await fetch(API_URL + '/upload', {
                     method: 'POST',
                     headers: {
                         'Content-Type': selectedFile.type,
                     },
                     body: selectedFile,
-                })).json()
-                console.log('Upload successful:', response)
-                setResponse({ txid: response.txid, network: response.network })
+                })
+                if (!res.ok) {
+                    let message = `Upload failed (${res.status})`
+                    try {
+                        const body = await res.json()
+                        if (body.error) message = body.error
+                    } catch { /* non-JSON response (e.g. proxy HTML error page) */ }
+                    setError(message)
+                    return
+                }
+                const data = await res.json()
+                console.log('Upload successful:', data)
+                setResponse({ txid: data.txid, network: data.network })
             } catch (error) {
                 console.error('Upload error:', error)
+                setError('Network error — could not reach server')
             } finally {
                 setLoading(false)
                 getFundingInfo()
@@ -81,6 +94,9 @@ function Upload() {
             <button onClick={upload} disabled={!selectedFile || loading}>
                 Upload
             </button>
+            {error && (
+                <p style={{ color: 'red' }}>{error}</p>
+            )}
             {response.txid && (
                 <div>
                     <h3>Upload successful</h3>

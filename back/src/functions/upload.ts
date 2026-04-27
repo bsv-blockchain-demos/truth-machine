@@ -58,75 +58,76 @@ const { NETWORK } = process.env
 export default async function (req: Request, res: Response) {
   try {
     const time = Date.now()
-  
-    // Buffer file data from stream
-    const b = []
-    req.on('data', (chunk) => {
-      console.log('data being uploaded...')
-      b.push(chunk)
+
+    // Get file data from express.raw() parsed body
+    const file = req.body as Buffer
+    if (!file || file.length === 0) {
+      res.status(400).json({ error: 'No file data received' })
+      return
+    }
+    console.log({ file })
+
+    // Calculate file hash and required token count
+    const fileHashArr = Hash.sha256(Utils.toArray(file.toString('hex'), 'hex'))
+    const fileHash = Utils.toHex(fileHashArr)
+    console.log({ fileHash })
+
+    // For a 32 byte hash fees will always be 10
+    const utxo = await db.collection('utxos').findOneAndUpdate({
+      fileHash: null,
+      confirmed: true,
+      invalid: null,
+      spent: { $ne: true }
+    },
+    { $set: { fileHash, spent: true } })
+    console.log({ utxo })
+
+    if (!utxo) {
+      res.status(503).json({ error: 'No available tokens. Please fund the treasury first.' })
+      return
+    }
+
+    // Create transaction with file hash commitment
+    const sourceTransaction = await db.collection('txs').findOne({ txid: utxo.txid })
+    console.log({ sourceTransaction })
+    const tx = new Transaction()
+
+    // Add input from allocated tokens
+    tx.addInput({
+      sourceTransaction: Transaction.fromHexBEEF(sourceTransaction.beef),
+      sourceOutputIndex: utxo.vout,
+      unlockingScriptTemplate: new HashPuzzle().unlock(utxo.secret.secret),
     })
-    
-    req.on('end', async () => {
-      const file = Buffer.concat(b)
-      console.log({ file })
 
-      // Calculate file hash and required token count
-      const fileHashArr = Hash.sha256(Utils.toArray(file.toString('hex'), 'hex'))
-      const fileHash = Utils.toHex(fileHashArr)
-      console.log({ fileHash })
-      
-      // For a 32 byte hash fees will always be 10
-      const utxo = await db.collection('utxos').findOneAndUpdate({ 
-        fileHash: null, 
-        confirmed: true, 
-        invalid: null,
-        spent: { $ne: true }
-      }, 
-      { $set: { fileHash, spent: true } })
-      console.log({ utxo })
-
-      // Create transaction with file hash commitment
-      const sourceTransaction = await db.collection('txs').findOne({ txid: utxo.txid })
-      console.log({ sourceTransaction })
-      const tx = new Transaction()
-      
-      // Add input from allocated tokens
-      tx.addInput({
-        sourceTransaction: Transaction.fromHexBEEF(sourceTransaction.beef),
-        sourceOutputIndex: utxo.vout,
-        unlockingScriptTemplate: new HashPuzzle().unlock(utxo.secret.secret),
-      })
-
-      // Add OP_RETURN output with file hash
-      tx.addOutput({
-        satoshis: 0,
-        lockingScript: new Data().lock(fileHashArr)
-      })
-
-      // Sign and broadcast transaction
-      await tx.sign()
-      console.log({ tx: tx.toHex() })
-      const initialResponse = await tx.broadcast(Arc)
-      console.log({ initialResponse })
-      
-      const txid = tx.id('hex')
-
-      // Store file data and metadata in BEEF format
-      // BEEF will be updated with BUMPs via ARC callbacks
-      const document = {
-        txid,
-        fileHash,
-        beef: tx.toHexBEEF(),  // Initial BEEF without BUMPs
-        arc: [initialResponse], // ARC responses track BUMP updates
-        file,
-        fileType: req.headers['content-type'],
-        time,
-      }
-      await db.collection('txs').insertOne(document)
-
-      // Return success response
-      res.send({ txid, fileHash, network: NETWORK })
+    // Add OP_RETURN output with file hash
+    tx.addOutput({
+      satoshis: 0,
+      lockingScript: new Data().lock(fileHashArr)
     })
+
+    // Sign and broadcast transaction
+    await tx.sign()
+    console.log({ tx: tx.toHex() })
+    const initialResponse = await tx.broadcast(Arc)
+    console.log({ initialResponse })
+
+    const txid = tx.id('hex')
+
+    // Store file data and metadata in BEEF format
+    // BEEF will be updated with BUMPs via ARC callbacks
+    const document = {
+      txid,
+      fileHash,
+      beef: tx.toHexBEEF(),  // Initial BEEF without BUMPs
+      arc: [initialResponse], // ARC responses track BUMP updates
+      file,
+      fileType: req.headers['content-type'],
+      time,
+    }
+    await db.collection('txs').insertOne(document)
+
+    // Return success response
+    res.send({ txid, fileHash, network: NETWORK })
   } catch (error) {
     console.error('Failed to upload file', error)
     res.status(500).json({ error: error.message })

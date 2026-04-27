@@ -21,7 +21,7 @@ app.get('/fund/:number', fund)
 app.get('/allFunds', allFunds)
 
 // Upload a file to the BSV Blockchain.
-app.use(express.raw()).post('/upload', upload)
+app.post('/upload', express.raw({ type: '*/*', limit: '50mb' }), upload)
 
 // Download the file data
 app.get('/download/:id', download)
@@ -30,10 +30,10 @@ app.get('/download/:id', download)
 app.get('/integrity/:id', integrity)
 
 // Callbacks from ARC will deliver Merkle Paths to this endpoint.
-app.use(express.json()).post('/callback', callback)
+app.post('/callback', express.json(), callback)
 
 // Checks the available number of utxos in the treasury.
-app.use(express.json()).get('/checkTreasury', checkTreasury)
+app.get('/checkTreasury', checkTreasury)
 
 // Update utxo status
 app.get('/utxoStatusUpdate', utxoStatusUpdate)

@@ -38,7 +38,7 @@ function Upload() {
                 const res = await fetch(API_URL + '/upload', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': selectedFile.type,
+                        'Content-Type': 'application/octet-stream',
                     },
                     body: selectedFile,
                 })

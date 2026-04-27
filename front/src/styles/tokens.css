@@ -1,0 +1,49 @@
+/* ── Design Tokens ─────────────────────────────────────── */
+:root {
+  /* ── Colour ── */
+  --tm-cream:        #faf6ef;
+  --tm-parchment:    #f2ead3;
+  --tm-ink:          #1a1a1a;
+  --tm-ink-light:    #4a4a4a;
+  --tm-rule:         #c8b88a;
+  --tm-rule-light:   #e0d5b8;
+  --tm-accent:       #8b0000;
+  --tm-accent-hover: #a50000;
+  --tm-pass:         #2e7d32;
+  --tm-fail:         #c62828;
+  --tm-warn:         #b8860b;
+  --tm-white:        #ffffff;
+
+  /* ── Type ── */
+  --tm-font-serif:   'Playfair Display', Georgia, 'Times New Roman', serif;
+  --tm-font-sans:    'Inter', system-ui, -apple-system, sans-serif;
+  --tm-font-mono:    'IBM Plex Mono', 'Courier New', monospace;
+
+  --tm-fs-xs:   0.75rem;
+  --tm-fs-sm:   0.875rem;
+  --tm-fs-base: 1rem;
+  --tm-fs-lg:   1.125rem;
+  --tm-fs-xl:   1.5rem;
+  --tm-fs-2xl:  2rem;
+  --tm-fs-3xl:  2.75rem;
+
+  --tm-lh-tight:  1.15;
+  --tm-lh-normal: 1.5;
+  --tm-ls-wide:   0.12em;
+
+  /* ── Space ── */
+  --tm-sp-xs:  0.25rem;
+  --tm-sp-sm:  0.5rem;
+  --tm-sp-md:  1rem;
+  --tm-sp-lg:  1.5rem;
+  --tm-sp-xl:  2rem;
+  --tm-sp-2xl: 3rem;
+  --tm-sp-3xl: 4rem;
+
+  /* ── Texture ── */
+  --tm-radius:      2px;
+  --tm-shadow-card: 0 1px 3px rgba(0,0,0,.08);
+  --tm-border:      1px solid var(--tm-rule-light);
+  --tm-border-dark: 1px solid var(--tm-rule);
+  --tm-transition:  180ms ease;
+}

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <!-- Background circle (cream fill) -->
+  <circle cx="60" cy="60" r="56" fill="#f5f0e8"/>
+  <!-- Outer notched ring -->
+  <circle cx="60" cy="60" r="56" fill="none" stroke="#8b7d6b" stroke-width="1.5" stroke-dasharray="4.5 3" />
+  <!-- Inner border ring -->
+  <circle cx="60" cy="60" r="46" fill="none" stroke="#8b7d6b" stroke-width="0.75"/>
+  <!-- Maroon filled center -->
+  <circle cx="60" cy="60" r="40" fill="#6b2020"/>
+  <!-- TM text -->
+  <text x="60" y="68" text-anchor="middle" font-family="'Playfair Display', Georgia, serif" font-size="28" font-weight="700" fill="#f5f0e8" letter-spacing="2">TM</text>
+</svg>

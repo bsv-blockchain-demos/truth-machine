@@ -19,41 +19,60 @@ function Download () {
             setError('')
         } catch (error) {
             console.log({ error })
+            setIntegrityResult(null)
             setError(String(error) || 'error')
         } finally {
             setLoading(false)
         }
     }
 
-    if (loading) return <div>Loading...</div>
+    if (loading) return <div className="tm-loading">Loading...</div>
 
     return (
-        <div>
-            <label htmlFor='txid-input'>
-                <p>File id:</p>
-                <input
-                    type="text"
-                    placeholder="411d36a493..."
-                    value={fileId}
-                    className='txid-input'
-                    onChange={(e) => setFileId(e.target.value)}
-                />
-            </label>
-            <button onClick={handleSubmit}>Submit</button>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            {integrityResult && (
-                <div>
-                    <h3>Integrity Result</h3>
-                    <p><big>{integrityResult.valid ? 'Valid' : 'Invalid'}</big></p>
-                    <p>{`${new Date(integrityResult.time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} on ${new Date(integrityResult.time).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}`}</p>
-                    <p style={{ wordBreak: 'break-all' }}>Filehash: {integrityResult.fileHash}</p>
-                    <p>Broadcast: {integrityResult?.broadcast ? 'success' : 'problem'}</p>
-                    {integrityResult?.inBlock && <p>Depth: {integrityResult?.depth}</p>}
-                    <button onClick={() => window.location.href = `${API_URL}/download/${fileId}`}>Download</button>
+        <div className="tm-download-grid">
+            <div className="tm-download-grid__left">
+                <div className="tm-download-form-box">
+                    <p className="tm-field-label">File id:</p>
+                    <textarea
+                        placeholder="411d36a493..."
+                        value={fileId}
+                        onChange={(e) => setFileId(e.target.value)}
+                    />
                 </div>
-            )}
-            <p className='explainer'>Download files from the /download/:id endpoint. Validate their integrity using the /integrity/:id endoint.</p>
-            <p className='explainer'>The id can be either the txid of the transaction which timestamped the file, or the hash of the file data.</p>
+                <div className="tm-upload-actions">
+                    <button className="tm-btn tm-btn--primary" onClick={handleSubmit}>Submit</button>
+                </div>
+                {error && <pre className="tm-error">{error}</pre>}
+                <details className="tm-api-details">
+                    <summary>API details</summary>
+                    <p>Download files from the <code>/download/:id</code> endpoint. Validate their integrity using the <code>/integrity/:id</code> endpoint.</p>
+                    <p>The id can be either the txid of the transaction which timestamped the file, or the hash of the file data.</p>
+                </details>
+            </div>
+            <div className="tm-download-grid__right">
+                {integrityResult ? (
+                    <div className={`tm-verdict ${integrityResult.valid ? 'tm-verdict--pass' : 'tm-verdict--fail'}`}>
+                        <span className="tm-verdict__seal" />
+                        <h3>Integrity Result</h3>
+                        <p className="tm-verdict__status">{integrityResult.valid ? 'Valid' : 'Invalid'}</p>
+                        <p>{`${new Date(integrityResult.time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} on ${new Date(integrityResult.time).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}`}</p>
+                        <p><span className="tm-verdict__label">Filehash: </span>{integrityResult.fileHash}</p>
+                        <p><span className="tm-verdict__label">Broadcast: </span>{integrityResult?.broadcast ? 'success' : 'problem'}</p>
+                        {integrityResult?.inBlock && <p><span className="tm-verdict__label">Depth: </span>{integrityResult?.depth}</p>}
+                        <button className="tm-btn tm-btn--primary" onClick={() => window.location.href = `${API_URL}/download/${fileId}`}>Download</button>
+                    </div>
+                ) : error ? (
+                    <div className="tm-verdict tm-verdict--fail">
+                        <h3>Integrity Result</h3>
+                        <p className="tm-verdict__status">Failed</p>
+                        <p>{error}</p>
+                    </div>
+                ) : (
+                    <div className="tm-verdict-placeholder">
+                        Awaiting verification.
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

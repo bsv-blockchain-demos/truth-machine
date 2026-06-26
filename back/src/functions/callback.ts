@@ -32,6 +32,18 @@ export default async function (req: Request, res: Response) {
 
         const { txid, merklePath, txStatus } = req.body
 
+        // Validate txid is a well-formed 64-char hex string before it ever
+        // reaches a database query — prevents NoSQL operator injection
+        // (e.g. a JSON body sending txid as { $ne: null }).
+        if (typeof txid !== 'string' || !/^[0-9a-fA-F]{64}$/.test(txid)) {
+            res.status(400).send({ error: 'Invalid txid' })
+            return
+        }
+        if (merklePath !== undefined && typeof merklePath !== 'string') {
+            res.status(400).send({ error: 'Invalid merklePath' })
+            return
+        }
+
         if (defineFailure.includes(txStatus)) {
             // delete utxos associated with the txid
             await db.collection('utxos').deleteMany({ txid })

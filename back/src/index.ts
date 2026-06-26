@@ -1,4 +1,5 @@
 import express, { Application } from 'express'
+import { rateLimit } from 'express-rate-limit'
 import { upload, download, callback, integrity, fund, checkTreasury, utxoStatusUpdate, allFunds, consolidate } from './functions'
 import dotenv from 'dotenv'
 import cors from 'cors'
@@ -11,6 +12,16 @@ app.use(cors({ origin: '*' }))
 
 // ADD THIS LINE - Handle preflight requests
 app.options('*', cors())
+
+// Rate limiting — protect every endpoint from abuse / DoS.
+// Generous window so normal demo usage is never throttled.
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 1000,                // per IP, per window
+    standardHeaders: true,
+    legacyHeaders: false,
+})
+app.use(limiter)
 
 // Fund the treasury by splitting funds associated 
 // with a regular address into a number of 1 sat outputs.

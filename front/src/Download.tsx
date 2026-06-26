@@ -66,7 +66,7 @@ function Download () {
                         <p><span className="tm-verdict__label tm-verdict__label--bold">Filehash: </span>{integrityResult.fileHash}<button className="tm-copy-icon" onClick={() => copyHash(integrityResult.fileHash)} title={copied ? 'Copied!' : 'Copy File Hash'}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{copied ? <path d="M20 6L9 17l-5-5" /> : <><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></>}</svg></button></p>
                         <p><span className="tm-verdict__label tm-verdict__label--bold">Broadcast: </span>{integrityResult?.broadcast ? 'Success' : 'Problem'}</p>
                         {integrityResult?.inBlock && <p><span className="tm-verdict__label tm-verdict__label--bold">Depth: </span>{integrityResult?.depth}</p>}
-                        <button className="tm-btn tm-btn--primary" onClick={() => window.location.href = `${API_URL}/download/${fileId}`}>
+                        <button className="tm-btn tm-btn--primary" onClick={() => window.location.href = `${API_URL}/download/${encodeURIComponent(fileId)}`}>
                             Download
                         </button>
                     </div>

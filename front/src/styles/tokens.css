@@ -51,3 +51,30 @@
   --tm-border-dark: 1px solid var(--tm-rule);
   --tm-transition:  180ms ease;
 }
+
+/* ── Dark theme ────────────────────────────────────────── */
+/* A warm, low-glare inversion — soft charcoal/brown surfaces and
+   parchment-toned text, keeping the documentary, archival feel.
+   Borders (--tm-border / --tm-border-dark) resolve from the rule
+   tokens at use-site, so they adapt automatically. */
+:root[data-theme="dark"] {
+  --tm-cream:        #1b1815;
+  --tm-paper:        #1b1815;
+  --tm-parchment:    #2a261f;
+  --tm-ink:          #ece3d2;
+  --tm-ink-light:    #b4aa96;
+  --tm-rule:         #574e3d;
+  --tm-rule-light:   #383229;
+  --tm-accent:       #e07b6f;
+  --tm-accent-hover: #ef9085;
+  --tm-pass:         #6fbf73;
+  --tm-fail:         #ef6b66;
+  --tm-warn:         #d8a93a;
+  --tm-white:        #242019;
+  --tm-muted:        #948a78;
+  --tm-ink2:         #9a8f7a;
+  --tm-accent-2:     #d4b54a;
+  --tm-shadow-card:  0 1px 3px rgba(0,0,0,.5);
+
+  color-scheme: dark;
+}

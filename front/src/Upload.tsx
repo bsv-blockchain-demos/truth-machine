@@ -95,22 +95,17 @@ function Upload({ onUploadComplete }: { onUploadComplete?: () => void }) {
                             onDrop={handleDrop}
                             className="tm-dropzone"
                         >
-                            <span className="tm-corner tm-corner--tl" />
-                            <span className="tm-corner tm-corner--tr" />
-                            <span className="tm-corner tm-corner--bl" />
-                            <span className="tm-corner tm-corner--br" />
                             {selectedFile ? (
                                 <p className="tm-dropzone__instruction tm-dropzone__instruction--file" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {selectedFile.name}
                                 </p>
                             ) : (
                                 <>
-                                    <svg className="tm-dropzone__glyph" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="var(--tm-ink2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M20 2H8a2 2 0 00-2 2v24a2 2 0 002 2h16a2 2 0 002-2V8z" />
-                                        <polyline points="20,2 20,8 26,8" />
-                                        <line x1="10" y1="16" x2="22" y2="16" />
-                                        <line x1="10" y1="20" x2="22" y2="20" />
-                                        <line x1="10" y1="24" x2="18" y2="24" />
+                                    <svg className="tm-dropzone__glyph" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--tm-ink2)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="12" cy="12" r="9.5" />
+                                        <path d="M12 15V8" />
+                                        <path d="M8.5 11.5 12 8l3.5 3.5" />
+                                        <path d="M8 16.5h8" />
                                     </svg>
                                     <p className="tm-dropzone__instruction">Drag and drop a file or click to browse</p>
                                 </>

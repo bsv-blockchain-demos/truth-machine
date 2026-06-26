@@ -21,6 +21,7 @@ body {
   background-color: var(--tm-cream);
   line-height: var(--tm-lh-normal);
   min-height: 100vh;
+  transition: background-color var(--tm-transition), color var(--tm-transition);
 }
 
 #root {
@@ -788,15 +789,13 @@ button {
 
 .tm-dropzone {
   position: relative;
-  border: 1px solid var(--tm-ink);
-  outline: 1px solid var(--tm-ink);
-  outline-offset: -7px;
+  border: 1px dashed var(--tm-ink);
   border-radius: 0;
   padding: 34px var(--tm-sp-xl);
   text-align: center;
   cursor: pointer;
   background: var(--tm-white);
-  transition: background 180ms ease, outline-color 180ms ease;
+  transition: background 180ms ease, border-color 180ms ease;
   height: 180px;
   display: flex;
   flex-direction: column;
@@ -805,11 +804,10 @@ button {
 }
 .tm-dropzone:hover {
   background: var(--tm-parchment);
-  outline-color: var(--tm-accent);
+  border-color: var(--tm-accent);
 }
-.tm-dropzone:focus-visible {
-  outline: 2px solid var(--tm-accent);
-  outline-offset: -7px;
+.tm-dropzone:focus-within {
+  border-color: var(--tm-accent);
 }
 
 /* Corner ornaments (shared by dropzone & form box) */
@@ -1401,4 +1399,78 @@ button {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ── Header right cluster + theme toggle ───────────────── */
+.tm-header__right {
+  display: flex;
+  align-items: center;
+  gap: var(--tm-sp-md);
+}
+
+.tm-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: var(--tm-border-dark);
+  background: var(--tm-white);
+  color: var(--tm-ink-light);
+  cursor: pointer;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .04);
+  transition: background var(--tm-transition), color var(--tm-transition),
+              border-color var(--tm-transition), transform var(--tm-transition);
+}
+.tm-theme-toggle:hover {
+  background: var(--tm-parchment);
+  border-color: var(--tm-rule);
+  color: var(--tm-accent);
+}
+.tm-theme-toggle:active {
+  transform: scale(0.92);
+}
+.tm-theme-toggle svg {
+  display: block;
+}
+
+/* ── Dark theme: overrides for the few hardcoded surfaces ─ */
+[data-theme="dark"] .tm-dropzone {
+  border-color: var(--tm-rule);
+}
+[data-theme="dark"] .tm-treasury-pill--ok {
+  background: rgba(111, 191, 115, 0.12);
+  border-color: rgba(111, 191, 115, 0.40);
+}
+[data-theme="dark"] .tm-treasury-pill--ok:hover {
+  background: rgba(111, 191, 115, 0.20);
+  border-color: rgba(111, 191, 115, 0.55);
+}
+[data-theme="dark"] .tm-treasury-pill--warn {
+  background: rgba(216, 169, 58, 0.12);
+  border-color: rgba(216, 169, 58, 0.40);
+}
+[data-theme="dark"] .tm-treasury-pill__badge--ok {
+  background: rgba(111, 191, 115, 0.16);
+}
+[data-theme="dark"] .tm-treasury-pill__badge--warn {
+  background: rgba(216, 169, 58, 0.16);
+}
+[data-theme="dark"] .tm-stat-card--pass {
+  background: rgba(111, 191, 115, 0.10);
+}
+[data-theme="dark"] .tm-stat-card--warn {
+  background: rgba(216, 169, 58, 0.10);
+}
+[data-theme="dark"] .tm-error {
+  background: rgba(239, 107, 102, 0.10);
+  border-color: rgba(239, 107, 102, 0.35);
+}
+[data-theme="dark"] .tm-modal-backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+[data-theme="dark"] .tm-modal__loading-overlay {
+  background: rgba(27, 24, 21, 0.75);
 }

@@ -55,6 +55,41 @@ function TreasuryPill() {
     )
 }
 
+type Theme = 'light' | 'dark'
+
+function ThemeToggle() {
+    const [theme, setTheme] = useState<Theme>(
+        () => (document.documentElement.getAttribute('data-theme') as Theme) || 'light'
+    )
+
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme)
+        try { localStorage.setItem('tm-theme', theme) } catch { /* localStorage unavailable */ }
+    }, [theme])
+
+    const isDark = theme === 'dark'
+
+    return (
+        <button
+            className="tm-theme-toggle"
+            onClick={() => setTheme(t => (t === 'dark' ? 'light' : 'dark'))}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            title={isDark ? 'Light mode' : 'Dark mode'}
+        >
+            {isDark ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+                </svg>
+            ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+            )}
+        </button>
+    )
+}
+
 function App() {
     const [uploadComplete, setUploadComplete] = useState(false)
 
@@ -69,7 +104,10 @@ function App() {
                             <h2 className="subtitle">Data Integrity &amp; Timestamping</h2>
                         </div>
                     </div>
-                    <TreasuryPill />
+                    <div className="tm-header__right">
+                        <ThemeToggle />
+                        <TreasuryPill />
+                    </div>
                 </header>
 
                 <section className="tm-hero">

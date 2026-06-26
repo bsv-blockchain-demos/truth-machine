@@ -8,10 +8,26 @@ const { PORT } = process.env
 
 const app: Application = express()
 
-app.use(cors({ origin: '*' }))
+// CORS — lock down to an allowlist in production via CORS_ORIGINS
+// (comma-separated). When unset, any origin is allowed so the public
+// demo keeps working; the API has no cookie-based auth, so this carries
+// no credential-theft risk.
+const corsAllowlist = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+    : null
+const corsMiddleware = cors({
+    origin(origin, callback) {
+        if (!corsAllowlist || !origin || corsAllowlist.includes(origin)) {
+            callback(null, true)
+        } else {
+            callback(new Error('Not allowed by CORS'))
+        }
+    },
+})
+app.use(corsMiddleware)
 
-// ADD THIS LINE - Handle preflight requests
-app.options('*', cors())
+// Handle preflight requests
+app.options('*', corsMiddleware)
 
 // Rate limiting — protect every endpoint from abuse / DoS.
 // Generous window so normal demo usage is never throttled.

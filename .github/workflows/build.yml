@@ -11,6 +11,10 @@ on:
       - master
   workflow_dispatch:
 
+# Minimal default permissions for all jobs; the build job widens this as needed.
+permissions:
+  contents: read
+
 jobs:
   get_tag:
     runs-on: ubuntu-latest

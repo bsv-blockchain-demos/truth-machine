@@ -1,1 +1,4 @@
 .idea/
+
+# macOS Finder metadata (matches at every level)
+.DS_Store

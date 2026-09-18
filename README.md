@@ -11,7 +11,7 @@ File contents stay in MongoDB. Only the fingerprint is written to the blockchain
 - Download the original bytes, with another hash check before saving.
 - Fund the treasury, mint write tokens and consolidate confirmed, unused tokens.
 - Follow clear success, pending and failure messages throughout each journey.
-- Use the interface on desktop or mobile, in light or dark mode.
+- Use the interface on desktop or mobile, with a light, automatic or dark theme.
 
 ## Run locally with Docker
 
@@ -79,15 +79,15 @@ Do not rerun it to start an existing funded installation. It also writes `NETWOR
 
 ### 1. Fund the treasury and mint tokens
 
-1. Open **Treasury** in the header.
+1. Select the treasury pill in the header to open the treasury panel.
 2. Deposit BSV at the displayed address, or use its QR code.
 3. Select **Refresh balance** after depositing.
-4. Choose between 1 and 1,000 tokens and select **Mint Tokens**.
+4. Choose between 1 and 1,000 tokens and select **Mint tokens**.
 5. Wait for **Tokens ready**, or follow the pending-action message.
 
 A wallet balance alone does not enable uploads. Each upload needs one available write token. The current implementation creates 13-satoshi token outputs and calculates minting and consolidation fees at 100 satoshis per kilobyte. These are application settings, not a guarantee of acceptance by every broadcaster.
 
-**Consolidate Tokens** returns the remaining value of confirmed, unused tokens to the treasury after the transaction fee. Those tokens are then unavailable for uploads. Pending, reserved or invalid tokens are excluded.
+**Consolidate tokens** returns the remaining value of confirmed, unused tokens to the treasury after the transaction fee. Those tokens are then unavailable for uploads. Pending, reserved or invalid tokens are excluded.
 
 ### 2. Upload a file
 
@@ -102,11 +102,11 @@ Files must contain content and be no larger than 10 MB (10 × 1,024 × 1,024 byt
 
 ### 3. Verify and download
 
-1. Paste a transaction ID or file hash into **Verify & Download**.
+1. Paste a transaction ID or file fingerprint into **2. Verify & download**.
 2. Select **Verify file**. Uppercase letters and surrounding spaces are accepted.
 3. Read the result, then select **Download file** when available.
 
-Verification recalculates the stored file's hash and checks it against the transaction commitment. A confirmed result also requires a valid Merkle proof checked against blockchain headers. The original filename and content type are retained for downloads. The server checks the file again, and the browser verifies the downloaded bytes before saving them.
+Verification recalculates the stored file's hash and checks it against the transaction commitment. A confirmed result also requires a valid Merkle proof checked against blockchain headers. The interface reports each of the four checks separately: stored file matches its fingerprint, fingerprint matches the on-chain record, transaction accepted by the network, and included in a mined block. The original filename and content type are retained for downloads. The server checks the file again, and the browser verifies the downloaded bytes before saving them.
 
 Changing the identifier clears the previous result. A pending file may be downloaded if its content matches, but that download does not establish blockchain confirmation.
 
@@ -115,7 +115,7 @@ Changing the identifier clears the previous result. A pending file may be downlo
 | Path | What the message means | Next step |
 | --- | --- | --- |
 | Happy: success | The named action completed, such as saving a file, making tokens available or verifying a mined proof. | Continue to verification, download the file or save its identifiers. |
-| Medium: pending | Block confirmation is pending, a lookup service is unavailable or network acceptance is uncertain. | Use **Check again** for a file or **Check pending actions** in Treasury. Avoid repeating uncertain transactions. |
+| Medium: pending | Block confirmation is pending, a lookup service is unavailable or network acceptance is uncertain. | Use **Check again** for a file or **Check pending actions** in the treasury panel. Avoid repeating uncertain transactions. |
 | Negative: failure | An identifier is invalid, a file was not found, file integrity failed or an action was rejected. | Correct the input or follow the message to refresh, choose another file or retry later. |
 
 Signed transactions and upload data are saved before broadcasting. Tokens are reserved during submission. A definite rejection releases the reservation; an uncertain network outcome keeps it held until reconciliation observes the transaction. Minted tokens only become available after acceptance.
@@ -270,6 +270,7 @@ Successful integrity lookups include:
 | `broadcast` | There is evidence of acceptance or network observation; this alone is not a mined proof. |
 | `inBlock` | A Merkle proof was verified against blockchain headers. |
 | `depth` | Block confirmations, or `null` when unavailable. |
+| `blockHeight` | Height of the block carrying the proof, or `null` when unavailable. |
 | `downloadAllowed` | The matching stored file may be downloaded. |
 | `message` | Explanation of the result and next step. |
 

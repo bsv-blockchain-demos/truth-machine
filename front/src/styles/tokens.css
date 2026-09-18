@@ -1,80 +1,64 @@
-/* ── Design Tokens ─────────────────────────────────────── */
-:root {
-  /* ── Colour ── */
-  --tm-cream:        #faf6ef;
-  --tm-parchment:    #f2ead3;
-  --tm-ink:          #1a1a1a;
-  --tm-ink-light:    #4a4a4a;
-  --tm-rule:         #c8b88a;
-  --tm-rule-light:   #e0d5b8;
-  --tm-accent:       #8b0000;
-  --tm-accent-hover: #a50000;
-  --tm-pass:         #2e7d32;
-  --tm-fail:         #c62828;
-  --tm-warn:         #b8860b;
-  --tm-white:        #ffffff;
-  --tm-paper:        #faf6ef;
-  --tm-muted:        #6b6560;
-  --tm-ink2:         #6b6355;
-  --tm-accent-2:     #b8960b;
-
-  /* ── Type ── */
-  --tm-font-serif:   'Playfair Display', Georgia, 'Times New Roman', serif;
-  --tm-font-sans:    'Inter', system-ui, -apple-system, sans-serif;
-  --tm-font-mono:    'IBM Plex Mono', 'Courier New', monospace;
-
-  --tm-fs-xs:   0.75rem;
-  --tm-fs-sm:   0.875rem;
-  --tm-fs-base: 1rem;
-  --tm-fs-lg:   1.125rem;
-  --tm-fs-xl:   1.5rem;
-  --tm-fs-2xl:  2rem;
-  --tm-fs-3xl:  2.75rem;
-
-  --tm-lh-tight:  1.15;
-  --tm-lh-normal: 1.5;
-  --tm-ls-wide:   0.12em;
-
-  /* ── Space ── */
-  --tm-sp-xs:  0.25rem;
-  --tm-sp-sm:  0.5rem;
-  --tm-sp-md:  1rem;
-  --tm-sp-lg:  1.5rem;
-  --tm-sp-xl:  2rem;
-  --tm-sp-2xl: 3rem;
-  --tm-sp-3xl: 4rem;
-
-  /* ── Texture ── */
-  --tm-radius:      2px;
-  --tm-shadow-card: 0 1px 3px rgba(0,0,0,.08);
-  --tm-border:      1px solid var(--tm-rule-light);
-  --tm-border-dark: 1px solid var(--tm-rule);
-  --tm-transition:  180ms ease;
+/* Truth Machine token layer, mapped to the BSV brand export (18 Sep 2026).
+   Values are the authored OKLCH from globals.css / app-ui.css, unchanged except for three
+   documented contrast deviations (see spec §1). Every legacy --tm-* name still resolves. */
+:root{
+--tm-cream:oklch(0.963 0.0035 84);--tm-paper:oklch(1 0 0);--tm-parchment:oklch(0.94 0.004 84);--tm-sunken:oklch(0.928 0.004 84);
+--tm-canvas:oklch(0.945 0.004 84);--tm-subtle:oklch(0.985 0.002 84);--tm-chip:oklch(0.925 0.005 84);--tm-row-hover:oklch(0.968 0.003 84);
+--tm-ink:oklch(0.27 0.004 286);--tm-ink-light:oklch(0.5 0.008 286);--tm-muted:oklch(0.5 0.015 286);
+--tm-rule:oklch(0.88 0.008 84);--tm-rule-light:oklch(0.902 0.005 84);--tm-rule-strong:oklch(0.33 0.19 268);--tm-row-divider:oklch(0.947 0.004 84);
+--tm-accent:oklch(0.51 0.28 264);--tm-accent-hover:oklch(0.45 0.26 264);--tm-accent-fg:oklch(0.99 0 0);
+--tm-accent-quiet:oklch(0.93 0.035 264);--tm-accent-2:oklch(0.33 0.19 268);--tm-accent-text:oklch(0.33 0.19 268);--tm-btn2-fg:oklch(0.33 0.19 268);
+--tm-link:oklch(0.45 0.26 264);--tm-cyan:oklch(0.8465 0.1458 208.7);--tm-ring:oklch(0.8465 0.1458 208.7 / 0.55);
+--tm-chip:oklch(0.925 0.005 84);--tm-segctl-track:oklch(0.892 0.006 84);
+--tm-faint:oklch(0.64 0.012 286);--tm-fainter:oklch(0.735 0.012 286);--tm-fainter2:oklch(0.785 0.011 286);--tm-divider2:oklch(0.928 0.005 84);
+--tm-ok-fg:#1d8f6b;--tm-ok-bg:rgba(29,158,117,0.12);--tm-ok-line:rgba(29,158,117,0.24);--tm-ok-dot:#1d9e75;
+--tm-pending-fg:#8a6400;--tm-pending-bg:rgba(233,185,73,0.16);--tm-pending-line:rgba(233,185,73,0.45);--tm-pending-dot:#e9b949;
+--tm-fail-fg:#b0443c;--tm-fail-bg:rgba(176,68,60,0.12);--tm-fail-line:rgba(176,68,60,0.3);--tm-fail-dot:#b0443c;
+--tm-info-fg:oklch(0.5 0.008 286);--tm-info-bg:oklch(0.925 0.005 84);--tm-info-line:oklch(0.888 0.006 84);--tm-info-dot:oklch(0.64 0.012 286);
+--tm-live-fg:oklch(0.46 0.095 216.5);--tm-live-line:oklch(0.5653 0.1007 216.5);--tm-live-bg:oklch(0.5653 0.1007 216.5 / 0.12);
+--tm-focus:oklch(0.8465 0.1458 208.7 / 0.55);
+--tm-font-serif:'Chillax','Geist',system-ui,sans-serif;
+--tm-font-sans:'Geist',system-ui,-apple-system,sans-serif;
+--tm-font-mono:'Geist Mono','JetBrains Mono',monospace;
+--tm-fs-micro:0.75rem;--tm-fs-xs:0.8125rem;--tm-fs-sm:0.875rem;--tm-fs-base:1rem;--tm-fs-lg:1.125rem;
+--tm-fs-xl:clamp(1.25rem,1.06rem + 0.75vw,1.625rem);--tm-fs-2xl:clamp(1.75rem,1.35rem + 1.6vw,2.5rem);--tm-fs-3xl:clamp(2rem,1.3rem + 2.9vw,3.5rem);
+--tm-lh-tight:1.06;--tm-lh-normal:1.6;--tm-ls-wide:0.06em;--tm-ls-mono:0;--tm-ls-display:-0.028em;--tm-ls-heading:-0.014em;
+--tm-sp-xs:0.25rem;--tm-sp-sm:0.5rem;--tm-sp-md:1rem;--tm-sp-lg:1.5rem;--tm-sp-xl:2rem;--tm-sp-2xl:3rem;--tm-sp-3xl:4rem;
+--tm-radius:12px;--tm-radius-card:14px;--tm-radius-panel:16px;--tm-radius-lg:20px;--tm-radius-pill:9999px;--tm-control-h:44px;
+--tm-shadow-card:0 8px 28px rgba(45,45,49,.08);
+--tm-shadow-primary:0 10px 24px -8px rgba(27,30,169,.5);
+--tm-shadow-raised:0 10px 34px rgba(45,45,49,.09);
+--tm-shadow-rail:0 6px 22px rgba(45,45,49,.04);
+--tm-modal-shadow:0 0 0 1px var(--tm-rule-light),0 24px 64px rgba(17,19,29,.16);
+--tm-control-h-sm:36px;--tm-control-h-lg:48px;
+--tm-border:1px solid var(--tm-rule-light);--tm-border-dark:1px solid var(--tm-rule);
+--tm-transition:180ms cubic-bezier(0.22,0.61,0.36,1);--tm-scrim:rgba(17,19,29,.5);
+--tm-white:var(--tm-paper);--tm-ink2:var(--tm-ink-light);
+--tm-pass:var(--tm-ok-fg);--tm-fail:var(--tm-fail-fg);--tm-warn:var(--tm-pending-fg);
 }
-
-/* ── Dark theme ────────────────────────────────────────── */
-/* A warm, low-glare inversion — soft charcoal/brown surfaces and
-   parchment-toned text, keeping the documentary, archival feel.
-   Borders (--tm-border / --tm-border-dark) resolve from the rule
-   tokens at use-site, so they adapt automatically. */
-:root[data-theme="dark"] {
-  --tm-cream:        #1b1815;
-  --tm-paper:        #1b1815;
-  --tm-parchment:    #2a261f;
-  --tm-ink:          #ece3d2;
-  --tm-ink-light:    #b4aa96;
-  --tm-rule:         #574e3d;
-  --tm-rule-light:   #383229;
-  --tm-accent:       #e07b6f;
-  --tm-accent-hover: #ef9085;
-  --tm-pass:         #6fbf73;
-  --tm-fail:         #ef6b66;
-  --tm-warn:         #d8a93a;
-  --tm-white:        #242019;
-  --tm-muted:        #948a78;
-  --tm-ink2:         #9a8f7a;
-  --tm-accent-2:     #d4b54a;
-  --tm-shadow-card:  0 1px 3px rgba(0,0,0,.5);
-
-  color-scheme: dark;
+:root[data-theme="dark"]{
+--tm-cream:oklch(0.17 0.028 272);--tm-paper:oklch(0.215 0.032 270);--tm-parchment:oklch(0.255 0.032 270);--tm-sunken:oklch(0.275 0.034 270);
+--tm-canvas:oklch(0.15 0.026 272);--tm-subtle:oklch(0.195 0.03 271);--tm-chip:oklch(0.275 0.032 270);--tm-row-hover:oklch(0.255 0.032 270);
+--tm-ink:oklch(0.955 0.004 84);--tm-ink-light:oklch(0.68 0.014 272);--tm-muted:oklch(0.635 0.02 272);
+--tm-rule:oklch(0.38 0.03 270);--tm-rule-light:oklch(0.315 0.03 270);--tm-rule-strong:oklch(1 0 0 / 0.5);--tm-row-divider:oklch(0.265 0.032 270);
+--tm-accent:oklch(0.64 0.215 262);--tm-accent-hover:oklch(0.7 0.19 258);--tm-accent-fg:oklch(0.99 0 0);
+--tm-accent-quiet:oklch(0.3 0.05 266);--tm-accent-2:oklch(0.72 0.14 264);--tm-accent-text:oklch(0.72 0.14 264);--tm-btn2-fg:oklch(0.955 0.004 84);
+--tm-link:oklch(0.7 0.19 258);
+--tm-chip:oklch(0.275 0.032 270);--tm-segctl-track:oklch(0.32 0.032 270);
+--tm-faint:oklch(0.61 0.02 272);--tm-fainter:oklch(0.545 0.016 272);--tm-fainter2:oklch(0.48 0.014 272);--tm-divider2:oklch(0.285 0.032 270);
+--tm-ok-fg:#5dcaa5;--tm-ok-bg:rgba(93,202,165,0.16);--tm-ok-line:rgba(93,202,165,0.3);--tm-ok-dot:#5dcaa5;
+--tm-pending-fg:#e9c766;--tm-pending-bg:rgba(233,185,73,0.18);--tm-pending-line:rgba(233,185,73,0.4);--tm-pending-dot:#e9b949;
+--tm-fail-fg:#e0837c;--tm-fail-bg:rgba(224,131,124,0.16);--tm-fail-line:rgba(224,131,124,0.35);--tm-fail-dot:#e0837c;
+--tm-info-fg:oklch(0.68 0.014 272);--tm-info-bg:oklch(0.285 0.032 270);--tm-info-line:oklch(0.34 0.03 270);--tm-info-dot:oklch(0.61 0.02 272);
+--tm-live-fg:oklch(0.8094 0.1082 208.9);--tm-live-line:oklch(0.8094 0.1082 208.9);--tm-live-bg:oklch(0.8094 0.1082 208.9 / 0.16);
+--tm-focus:oklch(0.8465 0.1458 208.7 / 0.55);--tm-ring:oklch(0.8465 0.1458 208.7 / 0.55);
+--tm-shadow-card:0 10px 32px rgba(0,0,0,.35);
+--tm-shadow-primary:0 10px 24px -8px rgba(27,30,169,.5);
+--tm-shadow-raised:0 12px 36px rgba(0,0,0,.45);
+--tm-shadow-rail:0 6px 22px rgba(0,0,0,.3);
+--tm-modal-shadow:0 0 0 1px var(--tm-rule-light),0 24px 64px rgba(0,0,0,.55);
+--tm-scrim:rgba(0,0,0,.55);
+--tm-white:var(--tm-paper);--tm-ink2:var(--tm-ink-light);
+--tm-pass:var(--tm-ok-fg);--tm-fail:var(--tm-fail-fg);--tm-warn:var(--tm-pending-fg);
+color-scheme:dark;
 }

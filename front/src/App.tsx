@@ -1,178 +1,239 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Upload from './Upload'
 import Download, { type DownloadHandle } from './Download'
-import './App.css'
 import Funding from './Funding'
+import './App.css'
 import { FundingProvider, useFunding } from './useFunding'
 import seal from './assets/truth-machine-seal.svg'
+import { IconThemeLight, IconThemeAuto, IconThemeDark, IconGitHub, IconBsvMark } from './components/icons'
 
-function TreasuryPill() {
-    const { fundingInfo, error, refreshing } = useFunding()
-    const [isOpen, setIsOpen] = useState(false)
-    const wrapperRef = useRef<HTMLDivElement>(null)
+type ThemeMode = 'light' | 'auto' | 'dark'
+const THEME_ORDER: ThemeMode[] = ['light', 'auto', 'dark']
+const THEME_ICON = { light: IconThemeLight, auto: IconThemeAuto, dark: IconThemeDark }
 
-    useEffect(() => {
-        function handleClickOutside(e: MouseEvent) {
-            if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-                setIsOpen(false)
-            }
-        }
-        function handleEscape(e: KeyboardEvent) {
-            if (e.key === 'Escape') setIsOpen(false)
-        }
-        if (isOpen) {
-            document.addEventListener('mousedown', handleClickOutside)
-            document.addEventListener('keydown', handleEscape)
-        }
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside)
-            document.removeEventListener('keydown', handleEscape)
-        }
-    }, [isOpen])
-
-    return (
-        <div className="tm-treasury-pill-wrapper" ref={wrapperRef}>
-            <button className={`tm-treasury-pill ${(!fundingInfo || !!error || fundingInfo.tokens === 0) ? 'tm-treasury-pill--warn' : 'tm-treasury-pill--ok'}`} onClick={() => setIsOpen(o => !o)}>
-                <span className="tm-treasury-pill__icon">◆</span>
-                <span className="tm-treasury-pill__label">TREASURY:</span>
-                <span className="tm-treasury-pill__stat">{error ? 'Unavailable' : fundingInfo ? fundingInfo.balance.toLocaleString() : refreshing ? 'Loading...' : 'Unavailable'}</span>
-                <span className="tm-treasury-pill__unit">SATS</span>
-                <span className="tm-treasury-pill__sep">|</span>
-                <span className={`tm-treasury-pill__badge ${(!fundingInfo || !!error || fundingInfo.tokens === 0) ? 'tm-treasury-pill__badge--warn' : 'tm-treasury-pill__badge--ok'}`}>
-                    {error ? 'Retry check' : fundingInfo ? `${fundingInfo.tokens.toLocaleString()} tokens` : 'Checking'}
-                </span>
-            </button>
-
-            {isOpen && (
-                <>
-                    <div className="tm-modal-backdrop" />
-                    <div className="tm-modal">
-                        <Funding onClose={() => setIsOpen(false)} />
-                    </div>
-                </>
-            )}
-        </div>
-    )
+function applyTheme(mode: ThemeMode) {
+    const dark = mode === 'dark' || (mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
 }
 
-type Theme = 'light' | 'dark'
-
-function ThemeToggle() {
-    const [theme, setTheme] = useState<Theme>(
-        () => (document.documentElement.getAttribute('data-theme') as Theme) || 'light'
-    )
+function ThemeButton() {
+    const [mode, setMode] = useState<ThemeMode>(() => {
+        try {
+            const stored = localStorage.getItem('tm-theme')
+            if (stored === 'light' || stored === 'dark' || stored === 'auto') return stored
+        } catch { /* localStorage unavailable */ }
+        return 'auto'
+    })
 
     useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme)
-        try { localStorage.setItem('tm-theme', theme) } catch { /* localStorage unavailable */ }
-    }, [theme])
+        applyTheme(mode)
+        try { localStorage.setItem('tm-theme', mode) } catch { /* localStorage unavailable */ }
+        if (mode !== 'auto') return
+        // Only auto tracks the system: an explicit choice must survive the OS changing under it.
+        const query = window.matchMedia('(prefers-color-scheme: dark)')
+        const onChange = () => applyTheme('auto')
+        query.addEventListener('change', onChange)
+        return () => query.removeEventListener('change', onChange)
+    }, [mode])
 
-    const isDark = theme === 'dark'
-
+    const next = THEME_ORDER[(THEME_ORDER.indexOf(mode) + 1) % THEME_ORDER.length]
+    const Icon = THEME_ICON[mode]
     return (
-        <button
-            className="tm-theme-toggle"
-            onClick={() => setTheme(t => (t === 'dark' ? 'light' : 'dark'))}
-            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            title={isDark ? 'Light mode' : 'Dark mode'}
-        >
-            {isDark ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="4" />
-                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-                </svg>
-            ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                </svg>
-            )}
+        <button type="button" className="tm-theme-btn" data-mode={mode}
+            aria-label={`Colour theme: ${mode}. Switch to ${next}`}
+            onClick={() => setMode(next)}>
+            <Icon />
         </button>
     )
 }
 
-function App() {
-    const [uploadComplete, setUploadComplete] = useState(false)
-    const downloadRef = useRef<DownloadHandle>(null)
+function TreasuryPill() {
+    const { fundingInfo, error, treasuryOpen, toggleTreasury } = useFunding()
+    const tone = error ? 'fail' : !fundingInfo ? 'idle' : fundingInfo.tokens === 0 ? 'warn' : 'ok'
+    const showValue = !!fundingInfo || !!error
+    const value = error ? 'Unavailable' : fundingInfo ? fundingInfo.balance.toLocaleString() : ''
+    const badge = error ? 'Retry check'
+        : !fundingInfo ? 'Checking'
+            : fundingInfo.tokens === 0 ? '0 tokens · add some'
+                : `${fundingInfo.tokens.toLocaleString()} tokens`
+    const description = error ? 'Treasury unavailable'
+        : fundingInfo ? `Treasury: ${fundingInfo.balance.toLocaleString()} satoshis, ${fundingInfo.tokens.toLocaleString()} write tokens`
+            : 'Treasury: checking'
 
     return (
-        <FundingProvider>
-            <div className="tm-app">
-                <header className="tm-header">
-                    <div className="tm-header__left">
-                        <img src={seal} alt="Truth Machine seal" />
-                        <div className="tm-header__text">
-                            <h1>Truth Machine</h1>
-                            <h2 className="subtitle">Data Integrity &amp; Timestamping</h2>
-                        </div>
-                    </div>
-                    <div className="tm-header__right">
-                        <ThemeToggle />
-                        <TreasuryPill />
-                    </div>
-                </header>
-
-                <section className="tm-hero">
-                    <span className="tm-hero__badge">
-                        <span className="tm-hero__dot" />
-                        LIVE DEMO ON BSV BLOCKCHAIN
-                    </span>
-                    <h2 className="tm-hero__headline">
-                        Proof that a file existed <em>here,</em> <em>now,</em> and <em>exactly as it is.</em>
-                    </h2>
-                    <p className="tm-hero__sub">
-                        Upload a file, save its fingerprint to the BSV blockchain, then check the file and its block confirmation.
-                    </p>
-                </section>
-
-                <main className="tm-app__sections">
-                    <section className="tm-section">
-                        <div className="tm-section__header">
-                            <div className={`tm-step ${uploadComplete ? 'tm-step--done' : 'tm-step--active'}`}>
-                                <span className="tm-step__number">{uploadComplete ? '✓' : '1'}</span>
-                            </div>
-                            <h2 className="tm-section__title">Upload File</h2>
-                        </div>
-                        <Upload onUploadComplete={() => setUploadComplete(true)} onSelectionChange={() => setUploadComplete(false)} onVerify={id => { void downloadRef.current?.verify(id) }} />
-                    </section>
-
-                    <section className="tm-section">
-                        <div className="tm-section__header">
-                            <div className={`tm-step ${uploadComplete ? 'tm-step--active' : 'tm-step--upcoming'}`}>
-                                <span className="tm-step__number">2</span>
-                            </div>
-                            <h2 className="tm-section__title">Verify &amp; Download</h2>
-                        </div>
-                        <Download ref={downloadRef} />
-                    </section>
-                </main>
-
-                <section className="tm-about">
-                    <h3 className="tm-about__title">About this demo</h3>
-                    <p className="tm-about__text">
-                        This application is intended to demonstrate the methodology for secure data integrity and timestamping on the BSV Blockchain. Upload a file, and its cryptographic hash is recorded on the blockchain, creating a fingerprint that can be checked against a confirmed blockchain transaction. Files are stored in a regular database and can be retrieved later with verifiable evidence of their blockchain commitment and integrity. The Treasury section enables token creation to fund transaction fees for the service. It ensures operational costs are covered and displays a balance of available write actions.
-                    </p>
-                </section>
-
-                <footer className="tm-footer">
-                    <div className="tm-footer__left">
-                        <img src={seal} alt="Truth Machine" className="tm-footer__logo" />
-                        <span className="tm-footer__name">Truth Machine</span>
-                    </div>
-                    <a
-                        href="https://github.com/bsv-blockchain-demos/truth-machine"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="tm-footer__github"
-                        aria-label="View source on GitHub"
-                    >
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.009-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
-                        </svg>
-                    </a>
-                </footer>
-            </div>
-        </FundingProvider>
+        <button type="button" className={`tm-pill tm-pill--${tone}`} id="tm-pill"
+            aria-expanded={treasuryOpen} aria-controls="tm-drawer"
+            aria-label={`${description}. ${treasuryOpen ? 'Close' : 'Open'} the treasury panel`}
+            onClick={toggleTreasury}>
+            <span className="tm-dot" />
+            <span className="tm-label tm-pill__label">Treasury</span>
+            {showValue && <span className="tm-pill__val">{value}</span>}
+            {!error && fundingInfo && <span className="tm-hint tm-pill__unit">sats</span>}
+            <span className="tm-pill__badge">{badge}</span>
+        </button>
     )
 }
 
-export default App
+function scrollToStage(id: string) {
+    const target = document.getElementById(id)
+    if (!target) return
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - 100, behavior: reduce ? 'auto' : 'smooth' })
+}
+
+function Page() {
+    const { treasuryOpen, closeTreasury } = useFunding()
+    const [uploadComplete, setUploadComplete] = useState(false)
+    const [verifyStatus, setVerifyStatus] = useState<'idle' | 'active' | 'done'>('idle')
+    const downloadRef = useRef<DownloadHandle>(null)
+
+    // The drawer is ordinary page content rather than a dialog, so it needs no focus trap.
+    // Escape still closes it, because that is what a reader who opened it will reach for.
+    useEffect(() => {
+        if (!treasuryOpen) return
+        const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') closeTreasury() }
+        document.addEventListener('keydown', onKey)
+        return () => document.removeEventListener('keydown', onKey)
+    }, [treasuryOpen, closeTreasury])
+
+    const onVerify = useCallback((id: string) => {
+        void downloadRef.current?.verify(id)
+        scrollToStage('stage-verify')
+    }, [])
+
+    const uploadStep = uploadComplete ? 'done' : 'active'
+    const verifyStep = verifyStatus === 'done' ? 'done'
+        : uploadComplete || verifyStatus === 'active' ? 'active' : 'upcoming'
+
+    const steps: { key: string; stage: string; title: string; description: string; state: string }[] = [
+        { key: '1', stage: 'stage-upload', title: 'Upload', description: 'Save the fingerprint', state: uploadStep },
+        { key: '2', stage: 'stage-verify', title: 'Verify', description: 'Check and download', state: verifyStep },
+    ]
+
+    return (
+        <div className="tm-app">
+            <header className="tm-header">
+                <div className="tm-shell tm-header__in">
+                    <div className="tm-brand">
+                        <img src={seal} width="44" height="44" alt="Truth Machine seal" />
+                        <div>
+                            <h1>Truth Machine</h1>
+                            <p className="tm-label">Data integrity &amp; timestamping</p>
+                        </div>
+                    </div>
+                    <div className="tm-header__right">
+                        <ThemeButton />
+                        <TreasuryPill />
+                    </div>
+                </div>
+
+                <div className="tm-drawer" id="tm-drawer" data-open={treasuryOpen}>
+                    <div className="tm-shell tm-drawer__in">
+                        <div className="tm-drawer__head">
+                            <div>
+                                <h2>Treasury</h2>
+                                <p className="tm-hint">The demo pays its own transaction fees. Deposit BSV, then mint write tokens. One token covers one upload. You only need this when tokens run out.</p>
+                            </div>
+                            <button type="button" className="tm-action" onClick={closeTreasury}>Close</button>
+                        </div>
+                        <div className="tm-panel"><Funding /></div>
+                    </div>
+                </div>
+            </header>
+
+            <section className="tm-shell tm-hero">
+                <div>
+                    <span className="tm-badge"><span className="tm-dot" />Live demo on the BSV blockchain</span>
+                    <h2 className="tm-hero__headline">Proof that a file existed <em>before a given block,</em> byte for byte.</h2>
+                    <p className="tm-hero__sub">Upload a file and its fingerprint is written to the BSV blockchain. Anyone holding the transaction ID or the fingerprint can check the file against that record later.</p>
+                </div>
+                <div className="tm-claims">
+                    <p><strong>What this proves</strong>The exact bytes existed no later than the block that carries the transaction.</p>
+                    <p><strong>What it does not prove</strong>Who made the file, when it was made, or whether anything in it is true.</p>
+                </div>
+            </section>
+
+            <div className="tm-shell tm-flow">
+                <nav className="tm-rail" aria-label="Progress">
+                    {steps.map(step => (
+                        <button type="button" key={step.key} className="tm-rail__step" data-s={step.state}
+                            aria-current={step.state === 'active' ? 'step' : undefined}
+                            onClick={() => scrollToStage(step.stage)}>
+                            <span className="tm-rail__num">{step.key}</span>
+                            <span>
+                                <span className="tm-rail__t">{step.title}</span>
+                                <span className="tm-rail__d">{step.description}</span>
+                            </span>
+                        </button>
+                    ))}
+                </nav>
+
+                <main className="tm-stages">
+                    <section className="tm-stage" id="stage-upload" aria-labelledby="h-upload">
+                        <div className="tm-stage__head">
+                            <h2 id="h-upload">1. Upload a file</h2>
+                            <span className="tm-label">Spends one write token</span>
+                        </div>
+                        <p className="tm-hint tm-stage__intro">The file&rsquo;s SHA-256 fingerprint goes on-chain; the bytes are stored so the file can be handed back and re-checked.</p>
+                        <div className="tm-panel">
+                            <Upload
+                                onUploadComplete={() => setUploadComplete(true)}
+                                onSelectionChange={() => setUploadComplete(false)}
+                                onVerify={onVerify} />
+                        </div>
+                    </section>
+
+                    <section className="tm-stage" id="stage-verify" aria-labelledby="h-verify">
+                        <div className="tm-stage__head">
+                            <h2 id="h-verify">2. Verify &amp; download</h2>
+                            <span className="tm-label">Free, no token needed</span>
+                        </div>
+                        <p className="tm-hint tm-stage__intro">Paste a transaction ID or fingerprint to see which of the four checks pass, and to download the original bytes.</p>
+                        <div className="tm-panel">
+                            <Download ref={downloadRef} onStatusChange={setVerifyStatus} />
+                        </div>
+                    </section>
+                </main>
+            </div>
+
+            <section className="tm-shell tm-about">
+                <div>
+                    <h3>About this demo</h3>
+                    <p>Truth Machine is a proof of concept by the BSV Association. When you upload a file, the server computes its SHA-256 fingerprint, writes that fingerprint into an OP_RETURN output of a BSV transaction, and stores the bytes alongside the transaction in BEEF format. Verification recomputes the fingerprint, compares it to the on-chain commitment, and checks a Merkle proof against block headers.</p>
+                </div>
+                <dl>
+                    <div>
+                        <dt>Write tokens</dt>
+                        <dd>The treasury is split into 13-satoshi outputs. One upload spends one token. Minting, checking pending actions and consolidating live in the treasury panel, opened from the header.</dd>
+                    </div>
+                    <div>
+                        <dt>Pending is not failure</dt>
+                        <dd>A pending outcome means the result is not yet known. Check the status rather than repeating a transaction that may already have gone through.</dd>
+                    </div>
+                    <div>
+                        <dt>Limits</dt>
+                        <dd>Files up to 10 MB. No accounts and no private storage, so treat everything uploaded here as public.</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <footer className="tm-shell tm-footer">
+                <div className="tm-footer__l">
+                    <span>&copy; {new Date().getFullYear()}</span>
+                    <span className="tm-footer__mark"><IconBsvMark /></span>
+                    <span className="tm-footer__org">BSV Association.</span>
+                    <span>A Swiss non-profit association.</span>
+                </div>
+                <div className="tm-footer__r">
+                    <span>Truth Machine, an open source proof of concept, powered by BSV.</span>
+                    <a href="https://github.com/bsv-blockchain-demos/truth-machine" target="_blank" rel="noopener noreferrer"
+                        aria-label="View source on GitHub"><IconGitHub size={18} /></a>
+                </div>
+            </footer>
+        </div>
+    )
+}
+
+export default function App() {
+    return <FundingProvider><Page /></FundingProvider>
+}

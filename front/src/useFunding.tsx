@@ -1,9 +1,10 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { ApiError, errorMessage, requestJson } from './api'
 import type { NoticeValue } from './components/Notice'
 
 export interface FundingInfo { address: string; balance: number; tokens: number; pending: number }
 type Action = 'mint' | 'check' | 'consolidate'
+
 interface FundingContextType {
     fundingInfo: FundingInfo | null
     loading: boolean
@@ -11,6 +12,10 @@ interface FundingContextType {
     action: Action | null
     error: string
     notice: NoticeValue | null
+    treasuryOpen: boolean
+    openTreasury: () => void
+    closeTreasury: () => void
+    toggleTreasury: () => void
     getFundingInfo: () => Promise<void>
     createTokens: (tokens: number) => Promise<void>
     utxoStatusUpdate: () => Promise<void>
@@ -18,15 +23,28 @@ interface FundingContextType {
 }
 const FundingContext = createContext<FundingContextType | undefined>(undefined)
 
+const RUNNING: Record<Action, { title: string; message: string }> = {
+    mint: { title: 'Creating write tokens', message: 'Building and broadcasting the funding transaction.' },
+    check: { title: 'Checking pending actions', message: 'Reading network acceptance and block confirmations. This can take a moment.' },
+    consolidate: { title: 'Consolidating tokens', message: 'Returning unused write tokens to the treasury.' },
+}
+const SETTLED: Record<Action, { done: string; pending: string }> = {
+    mint: { done: 'Tokens ready', pending: 'Tokens created, acceptance pending' },
+    check: { done: 'Check complete', pending: 'Still awaiting confirmation' },
+    consolidate: { done: 'Tokens consolidated', pending: 'Consolidation pending' },
+}
+
 export function FundingProvider({ children }: { children: ReactNode }) {
     const [fundingInfo, setFundingInfo] = useState<FundingInfo | null>(null)
     const [refreshing, setRefreshing] = useState(true)
     const [action, setAction] = useState<Action | null>(null)
     const [error, setError] = useState('')
     const [notice, setNotice] = useState<NoticeValue | null>(null)
+    const [treasuryOpen, setTreasuryOpen] = useState(false)
     const running = useRef(false)
     const refreshSequence = useRef(0)
 
+    // Kept free of synchronous state writes so the mount effect below can call it directly.
     const loadFundingInfo = useCallback(() => {
         const sequence = ++refreshSequence.current
         return requestJson<FundingInfo>('/checkTreasury').then(data => {
@@ -56,16 +74,20 @@ export function FundingProvider({ children }: { children: ReactNode }) {
         if (running.current) return
         running.current = true
         setAction(action)
-        setNotice({ tone: 'loading', title: action === 'mint' ? 'Creating tokens' : action === 'check' ? 'Checking pending actions' : 'Consolidating tokens',
-            message: action === 'check' ? 'Checking network acceptance and block confirmations. This may take a moment.' : 'Please wait while we prepare and submit the transaction. Do not repeat this action.' })
+        setNotice({ tone: 'loading', ...RUNNING[action] })
         try {
             const data = await requestJson<{ status: string; message: string }>(path)
-            setNotice({ tone: data.status === 'pending' ? 'pending' : 'success',
-                title: data.status === 'pending' ? 'Still awaiting confirmation' : action === 'mint' ? 'Tokens ready' : action === 'check' ? 'Check complete' : 'Tokens consolidated', message: data.message })
+            const pending = data.status === 'pending'
+            setNotice({ tone: pending ? 'pending' : 'success',
+                title: pending ? SETTLED[action].pending : SETTLED[action].done, message: data.message })
         } catch (error) {
+            // A dropped connection on a spending action is an unknown outcome, never a failure:
+            // repeating it could broadcast the same transaction twice.
             const uncertain = action !== 'check' && error instanceof ApiError && error.status === 0
-            setNotice({ tone: uncertain ? 'pending' : 'error', title: uncertain ? 'Outcome not yet known' : 'Action could not complete',
-                message: uncertain ? 'The connection was interrupted. Check pending actions before trying again so the transaction is not repeated.' : errorMessage(error) })
+            setNotice(uncertain
+                ? { tone: 'pending', title: 'Outcome not yet known',
+                    message: 'The connection dropped while the action was running. Check pending actions before you try again.' }
+                : { tone: 'error', title: 'Action could not complete', message: errorMessage(error) })
         } finally {
             await getFundingInfo()
             setAction(null)
@@ -73,7 +95,13 @@ export function FundingProvider({ children }: { children: ReactNode }) {
         }
     }
 
-    return <FundingContext.Provider value={{ fundingInfo, loading: refreshing || !!action, refreshing, action, error, notice, getFundingInfo,
+    const openTreasury = useCallback(() => setTreasuryOpen(true), [])
+    const closeTreasury = useCallback(() => setTreasuryOpen(false), [])
+    const toggleTreasury = useCallback(() => setTreasuryOpen(open => !open), [])
+
+    return <FundingContext.Provider value={{
+        fundingInfo, loading: refreshing || !!action, refreshing, action, error, notice,
+        treasuryOpen, openTreasury, closeTreasury, toggleTreasury, getFundingInfo,
         createTokens: tokens => runAction('mint', '/fund/' + tokens),
         utxoStatusUpdate: () => runAction('check', '/utxoStatusUpdate'),
         consolidate: () => runAction('consolidate', '/consolidate'),

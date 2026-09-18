@@ -1,4 +1,4 @@
-import express, { Application } from 'express'
+import express, { Application, ErrorRequestHandler } from 'express'
 import { rateLimit } from 'express-rate-limit'
 import { upload, download, callback, integrity, fund, checkTreasury, utxoStatusUpdate, allFunds, consolidate } from './functions'
 import dotenv from 'dotenv'
@@ -16,6 +16,7 @@ const corsAllowlist = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
     : null
 const corsMiddleware = cors({
+    exposedHeaders: ['Content-Disposition'],
     origin(origin, callback) {
         if (!corsAllowlist || !origin || corsAllowlist.includes(origin)) {
             callback(null, true)
@@ -27,7 +28,7 @@ const corsMiddleware = cors({
 app.use(corsMiddleware)
 
 // Handle preflight requests
-app.options('*', corsMiddleware)
+app.options('/{*splat}', corsMiddleware)
 
 // Rate limiting — protect every endpoint from abuse / DoS.
 // Generous window so normal demo usage is never throttled.
@@ -48,7 +49,7 @@ app.get('/fund/:number', fund)
 app.get('/allFunds', allFunds)
 
 // Upload a file to the BSV Blockchain.
-app.post('/upload', express.raw({ type: '*/*', limit: '50mb' }), upload)
+app.post('/upload', express.raw({ type: '*/*', limit: '10mb' }), upload)
 
 // Download the file data
 app.get('/download/:id', download)
@@ -67,6 +68,15 @@ app.get('/utxoStatusUpdate', utxoStatusUpdate)
 
 // Consolidate all available utxos into a single output
 app.get('/consolidate', consolidate)
+
+const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
+    if (error.type === 'entity.too.large') {
+        res.status(413).json({ error: 'This file is too large. Choose a file smaller than 10 MB.' })
+        return
+    }
+    res.status(500).json({ error: 'We could not complete this request. Please try again shortly.' })
+}
+app.use(errorHandler)
 
 app.listen(PORT, () => {
   console.log(`http://localhost:${PORT}`);

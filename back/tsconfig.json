@@ -6,8 +6,12 @@
         // Treat files as modules even if it doesn't use import/export
         "moduleDetection": "force",
 
-        // Ignore module structure
-        "module": "commonjs",
+        // Resolve dependencies using Node.js package rules
+        "module": "Node16",
+        "moduleResolution": "Node16",
+        "rootDir": "./src",
+        "types": ["node"],
+        "strict": true,
 
         // Allow JSON modules to be imported
         "resolveJsonModule": true,
@@ -24,4 +28,4 @@
         "skipLibCheck": true
     },
     "include": ["src/**/*.ts"]
-}   
+}

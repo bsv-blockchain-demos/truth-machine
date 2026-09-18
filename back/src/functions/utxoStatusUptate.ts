@@ -1,77 +1,40 @@
 import { Request, Response } from 'express'
+import { Transaction } from '@bsv/sdk'
 import db from '../db'
-import { MerklePath, Beef } from '@bsv/sdk'
-import { ARC_URL, NETWORK } from '../arc'
-import woc from '../woc'
+import { checkProof } from '../services/proofs'
+import { settleOperation } from '../services/operations'
 
-async function updateRecords(txid: string, merklePath: string, arc: any = { status: 'WoC retrieved' }): Promise<void> {
-    const document = await db.collection('txs').findOne({ txid })
-    if (!document) return
-    // Update transaction with Merkle path proof
-    const beef = Beef.fromString(document.beef, 'hex')
-    beef.mergeBump(MerklePath.fromHex(merklePath))
-    const tx = beef.findAtomicTransaction(txid)
-    const updated = tx.toHexBEEF()
-    // set all the utxos associated to spendable
-    await db.collection('txs').updateOne({ txid }, { $set: { beef: updated }, $addToSet: { arc } })
-    await db.collection('utxos').updateMany({ txid }, { $set: { confirmed: true } })
-}
-
-async function getBeefFromWoc(txid: string): Promise<string | null> {
+export default async function (_req: Request, res: Response) {
     try {
-        return await woc.getBeef(txid)
-    } catch (error) {
-        console.error('Failed to get Beef from WhatOnChain', error)
-        return null
-    }
-}
-
-async function setInvalid(txid: string): Promise<void> {
-    await db.collection('utxos').updateMany({ txid }, { $set: { invalid: true } })
-}
-
-export default async function (req: Request, res: Response) {
-    try {
-        // Lookup any utxos which have not been confirmed to find out why
-        const utxos = await db.collection('utxos').find({ confirmed: false, invalid: null }).toArray()
-        const txids = Array.from(new Set<string>(utxos.map(u => u.txid)))
-        console.info({ txids })
-
-        const updated = await Promise.allSettled(txids.map(async txid => {
-            let merklePath: string | undefined
-            // first attempt to check status on ARC
-            console.info('ARC BEEF retrieval for: ' + txid)
-            const arc = await (await fetch(ARC_URL + '/v1/tx/' + txid)).json()
-            merklePath = arc.merklePath
-            
-            if (!merklePath) {
-                // Try to enrich the data using WhatOnChain - a block explorer
-                console.info('WoC BEEF retrieval for: ' + txid)
-                const woc = await getBeefFromWoc(txid)
-                if (!woc || woc.startsWith('failed') || woc.startsWith('Internal')) {
-                    console.warn('Could not get Merkle Path from WoC, will retry later: ' + txid)
-                    return 'pending ' + txid
-                }
-                try {
-                    const beef = Beef.fromString(woc, 'hex')
-                    const tx = beef.findAtomicTransaction(txid)
-                    merklePath = tx?.merklePath?.toHex()
-                } catch (error) {
-                    console.error('Failed to parse MerklePath from BEEF from WhatOnChain for: ' + txid)
-                }
-            }
-            
-            if (!merklePath) {
-                return console.error('Transaction is not yet mined, just wait: ' + txid)
-            }
-            
-            await updateRecords(txid, merklePath, arc)
-            return txid
+        const tokens = await db.collection('utxos').distinct('txid', { confirmed: false, invalid: { $ne: true } })
+        const query = { $or: [
+            { operationStatus: { $in: ['broadcasting', 'unknown'] } },
+            { operationStatus: { $in: ['accepted', 'rejected'] }, settled: false },
+            { txid: { $in: tokens } },
+        ] }
+        const total = await db.collection('txs').countDocuments(query)
+        const records = await db.collection('txs').find(query).sort({ lastCheckedAt: 1 }).limit(5).toArray()
+        const results = await Promise.all(records.map(async record => {
+            try {
+                await db.collection('txs').updateOne({ txid: record.txid }, { $set: { lastCheckedAt: Date.now() } })
+                if (['accepted', 'rejected'].includes(record.operationStatus) && !record.settled) await settleOperation(record, record.operationStatus)
+                if (record.operationStatus === 'rejected') return { txid: record.txid, status: 'rejected' }
+                const proof = await checkProof(record, Transaction.fromHexBEEF(record.beef))
+                if (proof.invalidProof) return { txid: record.txid, status: 'unavailable' }
+                if (proof.seen && record.reservation && record.operationStatus !== 'accepted') await settleOperation(record, 'accepted')
+                return { txid: record.txid, status: proof.inBlock ? 'confirmed' : 'pending' }
+            } catch { return { txid: record.txid, status: 'unavailable' } }
         }))
-
-        res.send({ success: true, updated })
+        const confirmed = results.filter(r => r.status === 'confirmed').length
+        const pending = results.filter(r => r.status === 'pending').length
+        const rejected = results.filter(r => r.status === 'rejected').length
+        const unavailable = results.filter(r => r.status === 'unavailable').length
+        res.json({ status: pending || unavailable || rejected || total > records.length ? 'pending' : 'success', confirmed, pending, unavailable, rejected, remaining: total - records.length,
+            message: !results.length ? 'Your treasury is up to date. There are no pending actions to check.' :
+                `${confirmed} transaction${confirmed === 1 ? '' : 's'} confirmed, ${pending} still pending, ${unavailable} temporarily unavailable${rejected ? `, ${rejected} rejected with reservations released` : ''}. ${pending || unavailable ? 'Check again later; do not repeat pending actions.' : 'Your treasury has been updated.'}${total > records.length ? ' More actions still need checking; run this check again.' : ''}`,
+            results })
     } catch (error) {
-        console.error('Failed to handle Utxo Status Update', error)
-        res.status(500).send({ error: 'Internal Server Error' })
+        console.error('Status check unavailable', error)
+        res.status(503).json({ error: 'We could not check pending actions right now. Please try again shortly.' })
     }
 }

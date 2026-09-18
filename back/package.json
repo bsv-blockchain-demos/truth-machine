@@ -5,22 +5,23 @@
   "scripts": {
     "dev": "tsx watch ./src/index.ts",
     "build": "tsc",
-    "start": "node ./dist/index.js"
+    "start": "node ./dist/index.js",
+    "test": "npm run build && node --test tests/*.test.cjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@bsv/sdk": "^2.0.5",
-    "@bsv/templates": "^1.4.0",
-    "@bsv/wallet-toolbox": "^2.1.2",
-    "@types/express": "^5.0.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.1",
-    "express-rate-limit": "^8.5.2",
-    "mongodb": "^6.13.0"
+    "@bsv/sdk": "^2.7.1",
+    "@bsv/templates": "^1.10.1",
+    "@bsv/wallet-toolbox": "^2.13.0",
+    "@types/express": "^5.0.6",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.0",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "mongodb": "^7.6.0"
   },
   "overrides": {
     "@bsv/templates": {
@@ -28,9 +29,13 @@
     }
   },
   "devDependencies": {
-    "@types/node": "^22.13.4",
-    "resolve": "^1.22.8",
-    "tsx": "^4.21.0",
-    "typescript": "^5.8.3"
+    "@types/cors": "^2.8.19",
+    "@types/node": "^26.6.1",
+    "resolve": "^1.22.12",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": "^22.13.0 || >=24.0.0"
   }
 }

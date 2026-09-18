@@ -14,6 +14,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 const { NETWORK, FUNDING_WIF } = process.env
+if (!FUNDING_WIF) throw new Error('FUNDING_WIF must be configured before starting the backend')
 
 /**
  * Private key instance derived from WIF format

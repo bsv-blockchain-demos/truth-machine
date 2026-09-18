@@ -18,6 +18,7 @@ dotenv.config()
 
 // Load database configuration from environment variables
 const { MONGO_URI, DB_NAME } = process.env
+if (!MONGO_URI) throw new Error('MONGO_URI must be configured before starting the backend')
 
 // Initialize MongoDB client with connection string
 const client = new MongoClient(MONGO_URI)

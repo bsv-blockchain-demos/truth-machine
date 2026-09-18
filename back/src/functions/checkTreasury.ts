@@ -21,19 +21,21 @@ import { Request, Response } from 'express'
 import db from '../db'
 import { address } from '../functions/address'
 import woc from '../woc'
+import { availableTokens } from '../services/operations'
 
 export default async function (req: Request, res: Response) {
     try {
         // Count available tokens (UTXOs not yet assigned to files)
-        const tokens = await db.collection('utxos').countDocuments({ fileHash: null, spent: { $ne: true } })
+        const tokens = await db.collection('utxos').countDocuments(availableTokens)
         
         // Get current UTXO set and calculate total balance
         const utxos = await woc.getUtxos(address)
         const balance = utxos.reduce((a, b) => a + b.satoshis, 0)
         
-        res.send({ address, balance, tokens })
+        const pending = await db.collection('txs').countDocuments({ operationStatus: { $in: ['broadcasting', 'unknown'] } })
+        res.send({ address, balance, tokens, pending })
     } catch (error) {
         console.error('Failed to get utxos', error)
-        res.status(500).json({ error: error.message })
+        res.status(503).json({ error: 'Treasury information is temporarily unavailable. Please try again shortly.' })
     }
 }

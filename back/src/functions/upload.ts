@@ -1,135 +1,47 @@
-/**
- * File Upload Endpoint
- * 
- * This endpoint handles file uploads to the Truth Machine system, committing file hashes
- * to the Bitcoin blockchain and storing the actual file data in the database.
- * 
- * Process Flow:
- * 1. Receives and buffers file data
- * 2. Calculates file hash and required token count
- * 3. Allocates necessary tokens (UTXOs) based on file size
- * 4. Creates a transaction committing the file hash to blockchain
- * 5. Stores file data and transaction metadata in BEEF format
- * 
- * BEEF Storage:
- * The transaction is stored in BEEF (Background Evaluation Extended Format) which includes:
- * - Raw transaction data
- * - Merkle proofs (BUMPs) when received from ARC callbacks
- * - Transaction validation metadata
- * 
- * For detailed BEEF specification, see: https://bsv.brc.dev/transactions/0062
- * 
- * This format enables:
- * - Complete transaction verification
- * - SPV proof validation
- * - Chain of custody tracking
- * 
- * Token Allocation:
- * - Base cost: 1 token
- * - Additional tokens: 1 per KB after first 200 bytes
- * - Each token is a 1-satoshi UTXO
- * 
- * @route POST /api/upload
- * @consumes multipart/form-data
- * @returns {Object} Upload status
- *          - txid: Transaction ID of the commitment
- *          - fileHash: SHA256 hash of the file
- *          - network: Current network (main/test)
- * 
- * Database Storage:
- * - File content
- * - Transaction data (raw and BEEF format)
- * - File metadata (hash, type, timestamp)
- * - ARC responses for BUMP updates
- */
-
 import { Request, Response } from 'express'
-import { Utils, Hash, Transaction } from '@bsv/sdk'
-import db from '../db'
+import { createHash, randomUUID } from 'node:crypto'
+import { Transaction } from '@bsv/sdk'
 import { OpReturn } from '@bsv/templates'
+import db from '../db'
 import HashPuzzle from '../HashPuzzle'
-import Arc from '../arc'
-import dotenv from 'dotenv'
-dotenv.config()
-const Data = OpReturn
-
-const { NETWORK } = process.env
+import { MAX_FILE_BYTES } from '../services/files'
+import { availableTokens, submitOperation, releaseUnsubmitted } from '../services/operations'
 
 export default async function (req: Request, res: Response) {
-  try {
-    const time = Date.now()
-
-    // Get file data from express.raw() parsed body
     const file = req.body as Buffer
-    if (!file || file.length === 0) {
-      res.status(400).json({ error: 'No file data received' })
-      return
+    if (!Buffer.isBuffer(file) || !file.length) { res.status(400).json({ error: 'This file is empty. Choose a file with content and try again.' }); return }
+    if (file.length > MAX_FILE_BYTES) { res.status(413).json({ error: 'This file is too large. Choose a file smaller than 10 MB.' }); return }
+    const reservation = randomUUID()
+    try {
+        const fileHash = createHash('sha256').update(file).digest('hex')
+        const utxo = await db.collection('utxos').findOneAndUpdate(availableTokens, { $set: { reservedBy: reservation } })
+        if (!utxo) { res.status(503).json({ error: 'No write tokens are available. Open Treasury to mint tokens or check pending actions, then try again.' }); return }
+        const source = await db.collection('txs').findOne({ txid: utxo.txid })
+        if (!source) throw new Error('Token source is missing')
+        const tx = new Transaction()
+        tx.addInput({ sourceTransaction: Transaction.fromHexBEEF(source.beef), sourceOutputIndex: utxo.vout,
+            unlockingScriptTemplate: new HashPuzzle().unlock(utxo.secret.secret) })
+        tx.addOutput({ satoshis: 0, lockingScript: new OpReturn().lock(Array.from(Buffer.from(fileHash, 'hex'))) })
+        await tx.sign()
+        let fileName = String(req.headers['x-original-filename'] || 'download.bin')
+        try { fileName = decodeURIComponent(fileName) } catch { /* Older clients send plain filenames. */ }
+        const result = await submitOperation(tx, { type: 'upload', reservation, fileHash, file,
+            fileType: req.headers['x-original-content-type'] || 'application/octet-stream', fileName, time: Date.now() })
+        const common = { txid: result.txid, fileHash, network: process.env.NETWORK }
+        if (result.outcome === 'rejected') {
+            res.status(422).json({ ...common, error: 'The network rejected this upload. Your token is available again. Please try again later.' }); return
+        }
+        res.status(result.outcome === 'accepted' ? 200 : 202).json({ ...common,
+            status: result.outcome === 'accepted' ? 'accepted' : 'pending',
+            message: result.outcome === 'accepted' ? 'Your file is saved and its transaction was accepted. Block confirmation is pending. Use the ID or hash below to check it.' :
+                'Your file is saved, but network acceptance is not yet confirmed. Your token is reserved. Keep this ID and check its status before uploading again.' })
+    } catch (error) {
+        console.error('Upload could not finish', error)
+        const pending = await releaseUnsubmitted(reservation).catch(() => null)
+        if (pending) {
+            res.status(202).json({ status: 'pending', txid: pending.txid, fileHash: pending.fileHash, network: process.env.NETWORK,
+                message: 'Your upload is awaiting reconciliation. Keep this ID and check its status before trying again.' }); return
+        }
+        res.status(503).json({ error: 'We could not prepare your upload. Please check the treasury and try again shortly.' })
     }
-    console.log({ file })
-
-    // Calculate file hash and required token count
-    const fileHashArr = Hash.sha256(Utils.toArray(file.toString('hex'), 'hex'))
-    const fileHash = Utils.toHex(fileHashArr)
-    console.log({ fileHash })
-
-    // For a 32 byte hash fees will always be 10
-    const utxo = await db.collection('utxos').findOneAndUpdate({
-      fileHash: null,
-      invalid: null,
-      spent: { $ne: true }
-    },
-    { $set: { fileHash, spent: true } })
-    console.log({ utxo })
-
-    if (!utxo) {
-      res.status(503).json({ error: 'No available tokens. Please fund the treasury first.' })
-      return
-    }
-
-    // Create transaction with file hash commitment
-    const sourceTransaction = await db.collection('txs').findOne({ txid: utxo.txid })
-    console.log({ sourceTransaction })
-    const tx = new Transaction()
-
-    // Add input from allocated tokens
-    tx.addInput({
-      sourceTransaction: Transaction.fromHexBEEF(sourceTransaction.beef),
-      sourceOutputIndex: utxo.vout,
-      unlockingScriptTemplate: new HashPuzzle().unlock(utxo.secret.secret),
-    })
-
-    // Add OP_RETURN output with file hash
-    tx.addOutput({
-      satoshis: 0,
-      lockingScript: new Data().lock(fileHashArr)
-    })
-
-    // Sign and broadcast transaction
-    await tx.sign()
-    console.log({ tx: tx.toHex() })
-    const initialResponse = await tx.broadcast(Arc)
-    console.log({ initialResponse })
-
-    const txid = tx.id('hex')
-
-    // Store file data and metadata in BEEF format
-    // BEEF will be updated with BUMPs via ARC callbacks
-    const document = {
-      txid,
-      fileHash,
-      beef: tx.toHexBEEF(),  // Initial BEEF without BUMPs
-      arc: [initialResponse], // ARC responses track BUMP updates
-      file,
-      fileType: req.headers['x-original-content-type'] || req.headers['content-type'],
-      fileName: req.headers['x-original-filename'] || undefined,
-      time,
-    }
-    await db.collection('txs').insertOne(document)
-
-    // Return success response
-    res.send({ txid, fileHash, network: NETWORK })
-  } catch (error) {
-    console.error('Failed to upload file', error)
-    res.status(500).json({ error: error.message })
-  }
 }

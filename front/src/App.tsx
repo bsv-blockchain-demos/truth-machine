@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
 import Upload from './Upload'
-import Download from './Download'
+import Download, { type DownloadHandle } from './Download'
 import './App.css'
 import Funding from './Funding'
 import { FundingProvider, useFunding } from './useFunding'
 import seal from './assets/truth-machine-seal.svg'
 
 function TreasuryPill() {
-    const { fundingInfo } = useFunding()
+    const { fundingInfo, error, refreshing } = useFunding()
     const [isOpen, setIsOpen] = useState(false)
     const wrapperRef = useRef<HTMLDivElement>(null)
 
@@ -32,14 +32,14 @@ function TreasuryPill() {
 
     return (
         <div className="tm-treasury-pill-wrapper" ref={wrapperRef}>
-            <button className={`tm-treasury-pill ${fundingInfo.tokens === 0 ? 'tm-treasury-pill--warn' : 'tm-treasury-pill--ok'}`} onClick={() => setIsOpen(o => !o)}>
+            <button className={`tm-treasury-pill ${(!fundingInfo || !!error || fundingInfo.tokens === 0) ? 'tm-treasury-pill--warn' : 'tm-treasury-pill--ok'}`} onClick={() => setIsOpen(o => !o)}>
                 <span className="tm-treasury-pill__icon">◆</span>
                 <span className="tm-treasury-pill__label">TREASURY:</span>
-                <span className="tm-treasury-pill__stat">{fundingInfo.balance.toLocaleString()}</span>
+                <span className="tm-treasury-pill__stat">{error ? 'Unavailable' : fundingInfo ? fundingInfo.balance.toLocaleString() : refreshing ? 'Loading...' : 'Unavailable'}</span>
                 <span className="tm-treasury-pill__unit">SATS</span>
                 <span className="tm-treasury-pill__sep">|</span>
-                <span className={`tm-treasury-pill__badge ${fundingInfo.tokens === 0 ? 'tm-treasury-pill__badge--warn' : 'tm-treasury-pill__badge--ok'}`}>
-                    {fundingInfo.tokens.toLocaleString()} tokens
+                <span className={`tm-treasury-pill__badge ${(!fundingInfo || !!error || fundingInfo.tokens === 0) ? 'tm-treasury-pill__badge--warn' : 'tm-treasury-pill__badge--ok'}`}>
+                    {error ? 'Retry check' : fundingInfo ? `${fundingInfo.tokens.toLocaleString()} tokens` : 'Checking'}
                 </span>
             </button>
 
@@ -92,6 +92,7 @@ function ThemeToggle() {
 
 function App() {
     const [uploadComplete, setUploadComplete] = useState(false)
+    const downloadRef = useRef<DownloadHandle>(null)
 
     return (
         <FundingProvider>
@@ -119,7 +120,7 @@ function App() {
                         Proof that a file existed <em>here,</em> <em>now,</em> and <em>exactly as it is.</em>
                     </h2>
                     <p className="tm-hero__sub">
-                        Upload a file. Its cryptographic hash is written to the BSV blockchain. An immutable, timestamped record anyone can verify.
+                        Upload a file, save its fingerprint to the BSV blockchain, then check the file and its block confirmation.
                     </p>
                 </section>
 
@@ -131,7 +132,7 @@ function App() {
                             </div>
                             <h2 className="tm-section__title">Upload File</h2>
                         </div>
-                        <Upload onUploadComplete={() => setUploadComplete(true)} />
+                        <Upload onUploadComplete={() => setUploadComplete(true)} onSelectionChange={() => setUploadComplete(false)} onVerify={id => { void downloadRef.current?.verify(id) }} />
                     </section>
 
                     <section className="tm-section">
@@ -141,14 +142,14 @@ function App() {
                             </div>
                             <h2 className="tm-section__title">Verify &amp; Download</h2>
                         </div>
-                        <Download />
+                        <Download ref={downloadRef} />
                     </section>
                 </main>
 
                 <section className="tm-about">
                     <h3 className="tm-about__title">About this demo</h3>
                     <p className="tm-about__text">
-                        This application is intended to demonstrate the methodology for secure data integrity and timestamping on the BSV Blockchain. Upload a file, and its cryptographic hash is recorded on the blockchain, creating an immutable proof of existence at that exact time. Files are stored in a regular database and can be retrieved later with verifiable evidence of their creation date and integrity. The Treasury section enables token creation to fund transaction fees for the service. It ensures operational costs are covered and displays a balance of available write actions.
+                        This application is intended to demonstrate the methodology for secure data integrity and timestamping on the BSV Blockchain. Upload a file, and its cryptographic hash is recorded on the blockchain, creating a fingerprint that can be checked against a confirmed blockchain transaction. Files are stored in a regular database and can be retrieved later with verifiable evidence of their blockchain commitment and integrity. The Treasury section enables token creation to fund transaction fees for the service. It ensures operational costs are covered and displays a balance of available write actions.
                     </p>
                 </section>
 

@@ -6,15 +6,15 @@ import {
     defaultHttpClient,
     Transaction,
   } from '@bsv/sdk'
-  
+
   /**
    * Represents an WhatsOnChain transaction broadcaster.
    */
   export default class BitailsBroadcaster implements Broadcaster {
-    readonly network: string
+    readonly network = 'main'
     private readonly URL: string
     private readonly httpClient: HttpClient
-  
+
     /**
      * Constructs an instance of the WhatsOnChain broadcaster.
      *
@@ -27,7 +27,7 @@ import {
       this.URL = `https://api.bitails.io/tx/broadcast`
       this.httpClient = httpClient
     }
-  
+
     /**
      * Broadcasts a transaction via WhatsOnChain.
      *
@@ -38,7 +38,7 @@ import {
       tx: Transaction
     ): Promise<BroadcastResponse | BroadcastFailure> {
       const rawTx = tx.toHex()
-  
+
       const requestOptions = {
         method: 'POST',
         headers: {
@@ -47,7 +47,7 @@ import {
         },
         data: { raw: rawTx }
       }
-  
+
       try {
         const response = await this.httpClient.request<{ txid: string }>(
           this.URL,
@@ -72,11 +72,10 @@ import {
           status: 'error',
           code: '500',
           description:
-            typeof error.message === 'string'
+            error instanceof Error
               ? error.message
               : 'Internal Server Error'
         }
       }
     }
   }
-  

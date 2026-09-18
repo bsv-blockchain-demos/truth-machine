@@ -13,16 +13,16 @@ class SuperArc implements Broadcaster {
 
     constructor() {
         const taal = new ARC('https://arc.taal.com', {
-            callbackUrl: 'https://' + DOMAIN + '/callback',
+            callbackUrl: DOMAIN && !DOMAIN.includes('your-domain') ? 'https://' + DOMAIN.replace(/^https?:\/\//, '').replace(/\/$/, '') + '/callback' : undefined,
             callbackToken: CALLBACK_TOKEN,
             apiKey: ARC_API_KEY,
         })
         const gorillaPool = new ARC('https://arc.gorillapool.io', {
-            callbackUrl: 'https://' + DOMAIN + '/callback',
+            callbackUrl: DOMAIN && !DOMAIN.includes('your-domain') ? 'https://' + DOMAIN.replace(/^https?:\/\//, '').replace(/\/$/, '') + '/callback' : undefined,
             callbackToken: CALLBACK_TOKEN
         })
         const bsva = new ARC('https://arc-mainnet-staging-eu-1.bsvb.tech', {
-            callbackUrl: 'https://' + DOMAIN + '/callback',
+            callbackUrl: DOMAIN && !DOMAIN.includes('your-domain') ? 'https://' + DOMAIN.replace(/^https?:\/\//, '').replace(/\/$/, '') + '/callback' : undefined,
             callbackToken: CALLBACK_TOKEN
         })
         const WoC = new WhatsOnChainBroadcaster('main')
@@ -33,16 +33,19 @@ class SuperArc implements Broadcaster {
     // this function tries each of the available broadcaster options in order, returning on first success. 
     // This is done sequentially such that if ARC TAAL works, no other options are used, but if ARC TAAL fails, then we try other options.
     async broadcast(tx: Transaction): Promise<BroadcastResponse | BroadcastFailure> {
+        let allRejected = true
         for (const broadcaster of this.broadcasters) {
-            const response = await broadcaster.broadcast(tx)
-            console.info(response)
-            if (response.status === 'success') {
-                return response
+            try {
+                const response = await broadcaster.broadcast(tx)
+                if (response.status === 'success') return response
+                if (!['REJECTED', 'INVALID', 'MALFORMED'].includes(response.code)) allRejected = false
+            } catch {
+                allRejected = false
             }
         }
         return {
             status: 'error',
-            code: 'ERR_UNKNOWN',
+            code: allRejected ? 'REJECTED' : 'ERR_UNKNOWN',
             description: 'Failed to broadcast transaction to any of the configured broadcasters'
         }
     }
@@ -52,7 +55,7 @@ function createBroadcaster() {
     // if we're on testnet just use TAAL
     if (NETWORK !== 'main') {
         return new ARC('https://arc-test.taal.com', {
-            callbackUrl: 'https://' + DOMAIN + '/callback',
+            callbackUrl: DOMAIN && !DOMAIN.includes('your-domain') ? 'https://' + DOMAIN.replace(/^https?:\/\//, '').replace(/\/$/, '') + '/callback' : undefined,
             callbackToken: CALLBACK_TOKEN,
             apiKey: TEST_ARC_API_KEY,
         })
@@ -65,7 +68,7 @@ function createBroadcaster() {
 const broadcaster = createBroadcaster()
 
 export const ArcTaal = new ARC(ARC_URL, {
-    callbackUrl: 'https://' + DOMAIN + '/callback',
+    callbackUrl: DOMAIN && !DOMAIN.includes('your-domain') ? 'https://' + DOMAIN.replace(/^https?:\/\//, '').replace(/\/$/, '') + '/callback' : undefined,
     callbackToken: CALLBACK_TOKEN,
     apiKey: ARC_API_KEY,
 })

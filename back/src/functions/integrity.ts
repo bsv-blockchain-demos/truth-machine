@@ -1,146 +1,57 @@
-/**
- * File Integrity Verification Endpoint
- * 
- * This endpoint verifies the integrity and authenticity of files stored in the Truth Machine system
- * using BEEF (Background Evaluation Extended Format) transactions and SPV proofs.
- * 
- * BEEF Format:
- * BEEF is a comprehensive transaction format that combines:
- * - Raw Transaction Data (BRC-12)
- * - BSV Universal Merkle Path (BUMP) proofs (BRC-74)
- * - Transaction validation metadata
- * 
- * For detailed BEEF specification, see: https://bsv.brc.dev/transactions/0062
- * 
- * BEEF Structure:
- * 1. Version (4 bytes): 0100BEEF in little-endian
- * 2. Number of BUMPs (VarInt)
- * 3. BUMP data (if any)
- * 4. Number of transactions (VarInt)
- * 5. For each transaction:
- *    - Raw transaction data
- *    - BUMP association flag (0x01 if has BUMP, 0x00 if not)
- *    - BUMP index (VarInt, if has BUMP)
- * 
- * Verification Process:
- * 1. Parse BEEF data to extract transaction and BUMP information
- * 2. Verify transaction integrity using SPV (Simplified Payment Verification)
- * 3. Validate Merkle paths against block headers
- * 4. Confirm file hash matches the committed hash in the transaction
- * 
- * @route GET /api/verify/:id
- * @param {string} id - Transaction ID or file hash to verify
- * @returns {Object} Verification results
- *          - txid: Transaction ID
- *          - fileHash: Hash of the file
- *          - time: Timestamp
- *          - fileType: MIME type
- *          - beef: BEEF format transaction data
- *          - valid: Overall verification status
- * 
- * Error Cases:
- * - Invalid BEEF data structure
- * - SPV verification failure
- * - BUMP validation failure
- * - Hash mismatch between file and transaction
- */
-
 import { Request, Response } from 'express'
-import { Transaction, Beef, MerklePath } from '@bsv/sdk'
 import db from '../db'
-import dotenv from 'dotenv'
-import { ChaintracksServiceClient, ChaintracksChainTracker } from '@bsv/wallet-toolbox'
-dotenv.config()
-const { NETWORK } = process.env
-const chaintracksURL = NETWORK === 'main' ? 'https://chaintracks-us-1.bsvb.tech' : 'https://chaintracks-testnet-us-1.bsvb.tech'
-
-const ctsc = new ChaintracksServiceClient(NETWORK as 'main' | 'test', chaintracksURL)
-const ct = new ChaintracksChainTracker(NETWORK as 'main' | 'test', ctsc)
-
-const defineSuccess = ['SENT_TO_NETWORK', 'ACCEPTED_BY_NETWORK', 'SEEN_ON_NETWORK', 'MINED']
-const defineFailure = ['SEEN_IN_ORPHAN_MEMPOOL', 'DOUBLE_SPEND_ATTEMPTED', 'REJECTED']
-
-/**
- * 
- * @method verifyTipScript
- * @param {Transaction} tx - The transaction to verify.
- * 
- * @returns {Promise<boolean>} - A promise that resolves when the verification is complete.
- * 
- * This function is used to verify the tip script of a transaction by checking the script execution only.
- * It assumes that the Merkle path is valid and sets it to a default value.
- */
-async function verifyTipScript(tx: Transaction): Promise<boolean> {
-    tx.inputs = tx.inputs.map((input, vin) => {
-        input.sourceTransaction.merklePath = new MerklePath(1, [[{ offset: 0, txid: true, hash: '0000000000000000000000000000000000000000000000000000000000000000'}]]) // assume valid
-        return input
-    })
-    return await tx.verify('scripts only')
-}
+import { normaliseId, fileQuery, inspectFile } from '../services/files'
+import { checkProof, bounded, tracker } from '../services/proofs'
+import { settleOperation } from '../services/operations'
 
 export default async function (req: Request, res: Response) {
+    const id = normaliseId(req.params.id)
+    if (!id) { res.status(400).json({ error: 'Enter a 64-character transaction ID or file hash.' }); return }
     try {
-        // Retrieve transaction and file data
-        const { id } = req.params
-        const { txid, fileHash, time, fileType, beef, arc } = await db.collection('txs').findOne({
-            $or: [
-                { txid: id },
-                { fileHash: id }
-            ]
-        })
-
-        // Parse and validate BEEF data
-        // BEEF includes transaction data and Merkle proofs in a single format
-        const b = Beef.fromString(beef)
-        console.log(b.toLogString())
-        
-        // Extract transaction from BEEF and verify file hash commitment
-        const tx = Transaction.fromHexBEEF(beef)
-        const scriptHex = tx.outputs[0].lockingScript.toHex()
-        const txFileHash = scriptHex.slice(-64)
-
-        const matchedCommitment = txFileHash === fileHash
-        
-        // Perform SPV verification using WhatsOnChain - ONLY for the tip transaction
-        let inBlock, broadcast
+        const record = await db.collection('txs').findOne(fileQuery(id), { sort: { time: -1 } })
+        if (!record) { res.status(404).json({ error: 'No file was found for this ID or hash. Check it and try again.' }); return }
+        let inspection: ReturnType<typeof inspectFile>
+        try { inspection = inspectFile(record) } catch {
+            res.status(422).json({ error: 'This file record could not be verified. Download has been blocked.' }); return
+        }
+        const { matchedFile, matchedCommitment, contentValid } = inspection
+        const common = { id, txid: record.txid, fileHash: record.fileHash, fileName: record.fileName,
+            time: record.time, fileType: record.fileType, matchedFile, matchedCommitment }
+        if (!contentValid) {
+            res.status(422).json({ ...common, status: 'failed', valid: false, downloadAllowed: false,
+                error: 'The stored file does not match its recorded fingerprint. Download has been blocked.' }); return
+        }
+        let inBlock = false, seen = false, unavailable = false, invalidProof = false
+        let tx = inspection.tx
         try {
-            inBlock = await tx.merklePath?.verify(txid, ct)
-        } catch (error) {
-            console.error('SPV verification error:', error)
+            const proof = await checkProof(record, tx)
+            inBlock = proof.inBlock; seen = proof.seen; invalidProof = !!proof.invalidProof; tx = proof.tx
+        } catch { unavailable = true }
+        if ((seen || inBlock) && record.reservation && (record.operationStatus !== 'accepted' || !record.settled)) {
+            await settleOperation(record, 'accepted')
         }
-        if (!inBlock) {
-            try {
-                let arcSuccess = false
-                if (defineSuccess.includes(arc?.[0]?.message?.trim())) {
-                    arcSuccess = true
-                }
-                console.log({ arcSuccess, status: arc?.[0] })
-                broadcast = await verifyTipScript(tx) || arcSuccess
-            } catch (error) {
-                console.error('Broadcast verification error:', error)
-            }
+        const responses = Array.isArray(record.arc) ? record.arc : []
+        const rejected = record.operationStatus === 'rejected' || responses.some(r =>
+            ['REJECTED', 'DOUBLE_SPEND_ATTEMPTED', 'INVALID', 'MALFORMED'].includes(r.txStatus || r.code))
+        const accepted = record.operationStatus === 'accepted' || responses.some(r => r.status === 'success' ||
+            ['SENT_TO_NETWORK', 'ACCEPTED_BY_NETWORK', 'SEEN_ON_NETWORK', 'MINED'].includes(r.txStatus || r.message?.trim()))
+        const broadcast = inBlock || seen || (!rejected && accepted)
+        if (invalidProof || (rejected && !seen && !inBlock)) {
+            res.status(422).json({ ...common, status: 'failed', valid: false, broadcast: false, inBlock: false, downloadAllowed: false,
+                error: invalidProof ? 'The blockchain proof could not be validated. Try checking again later.' : 'The transaction was rejected. This file has not been confirmed on the blockchain.' }); return
         }
-        const valid = matchedCommitment && (broadcast || inBlock)
-
-        if (!broadcast) {
-            res.send({ error: 'Broadcast was unsuccessful', id, txid, fileHash, valid, broadcast, inBlock, matchedCommitment })
+        let depth: number | null = null
+        if (inBlock && tx.merklePath) {
+            try { depth = Math.max(1, await bounded(tracker.currentHeight()) - tx.merklePath.blockHeight + 1) } catch { /* Proof is valid even when current height is unavailable. */ }
         }
-
-        // Return error if verification fails
-        if (!valid) {
-            res.send({ error: 'something did not check out', id, txid, fileHash, valid, broadcast, inBlock, matchedCommitment })
-            return
-        }
-
-        const currentHeight = await ct.currentHeight()
-        const height = tx.merklePath?.blockHeight
-        const depth = currentHeight - height
-
-        // Return successful verification with BEEF data
-        res.send({
-            id, txid, fileHash, time, fileType, valid, broadcast, inBlock, matchedCommitment, depth, beef
-        })
+        res.json({ ...common, status: inBlock ? 'confirmed' : 'pending', valid: inBlock, contentValid: true,
+            broadcast, inBlock, depth, downloadAllowed: true,
+            message: inBlock ? 'Your file matches its fingerprint and its blockchain proof is verified.' :
+                unavailable ? 'Your file matches its fingerprint. Blockchain verification is temporarily unavailable. You can download the matching file or check again later.' :
+                broadcast ? 'Your file matches its fingerprint. The transaction is accepted, but block confirmation is still pending. You can download the file and check again later.' :
+                'Your file is stored and matches its fingerprint. Network acceptance is not yet confirmed. Keep this ID and check again before uploading again.' })
     } catch (error) {
-        res.send({ error: error.message })
+        console.error('Verification unavailable', error)
+        res.status(503).json({ error: 'We could not check this file right now. Please try again shortly.' })
     }
 }

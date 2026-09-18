@@ -1,131 +1,59 @@
-/**
- * Treasury Funding Endpoint
- * 
- * This endpoint creates new tokens (UTXOs) for file storage in the Truth Machine system.
- * It splits a single UTXO into multiple 1-satoshi outputs, each locked with a unique hash puzzle.
- * These outputs serve as tokens that can later be used to store file data.
- * 
- * Process:
- * 1. Validates requested token count (max 1000)
- * 2. Checks available funding
- * 3. Generates unique secret-hash pairs for each token
- * 4. Creates and broadcasts a transaction with hash-locked outputs
- * 5. Stores transaction and token data in the database
- * 
- * @route POST /api/fund/:number
- * @param {string} number - Number of tokens to create (max 1000)
- * @returns {Object} Creation status
- *          - txid: Transaction ID
- *          - number: Number of tokens created
- *          - txDbResponse: Database response for transaction storage
- *          - utxosDbResponse: Database response for UTXO storage
- * 
- * Security:
- * - Each token is locked with a unique hash puzzle
- * - Secrets are stored securely in the database
- * - Change is returned to the treasury address
- */
-
 import { Request, Response } from 'express'
+import { randomUUID } from 'node:crypto'
 import { P2PKH, SatoshisPerKilobyte, Transaction } from '@bsv/sdk'
 import HashPuzzle from '../HashPuzzle'
 import db from '../db'
-import Arc from '../arc'
-import { address, key } from '../functions/address'
+import { address, key } from './address'
 import woc from '../woc'
+import { submitOperation, releaseUnsubmitted } from '../services/operations'
 
 export default async function (req: Request, res: Response) {
-  try {
-    const { number: strNum } = req.params
-    const number = parseInt(strNum)
-
-    console.log({ number })
-
-    // Validate token count
-    if (number > 1000) {
-      res.send({ error: 'too many outputs, keep it to 1000 max', number })
-      return
+    const value = String(req.params.number)
+    const number = Number(value)
+    if (!/^\d+$/.test(value) || !Number.isSafeInteger(number) || number < 1 || number > 1000) {
+        res.status(400).json({ error: 'Choose a whole number of tokens between 1 and 1,000.' }); return
     }
-
-    // Check funding availability
-    const utxos = await woc.getUtxos(address)
-
-    if (utxos.length === 0) {
-      res.send({ error: 'no utxos found for address', address })
-      return
+    const reservation = randomUUID()
+    try {
+        const utxos = await woc.getUtxos(address)
+        utxos.sort((a, b) => b.satoshis - a.satoshis)
+        const utxo = utxos[0]
+        const required = number * 13 + 100
+        if (!utxo || utxo.satoshis < required) {
+            res.status(409).json({ error: 'There are not enough available funds for this amount. Deposit BSV at the treasury address or choose fewer tokens.' }); return
+        }
+        try {
+            await db.collection('fundingLocks').insertOne({ _id: `${utxo.txid}:${utxo.vout}` as any, reservation })
+        } catch (error) {
+            if (typeof error !== 'object' || error === null || !('code' in error) || error.code !== 11000) throw error
+            res.status(409).json({ error: 'These funds are already being used by another action. Check pending actions before minting again.' }); return
+        }
+        const beef = await woc.getBeef(utxo.txid)
+        if (!beef) throw new Error('Funding proof unavailable')
+        const pairs = Array.from({ length: number }, () => HashPuzzle.generateSecretPair())
+        const tx = new Transaction()
+        tx.addInput({ sourceTransaction: Transaction.fromHexBEEF(beef), sourceOutputIndex: utxo.vout,
+            unlockingScriptTemplate: new P2PKH().unlock(key) })
+        for (const pair of pairs) tx.addOutput({ satoshis: 13, lockingScript: new HashPuzzle().lock(pair.hash) })
+        tx.addOutput({ change: true, lockingScript: new P2PKH().lock(address) })
+        await tx.fee(new SatoshisPerKilobyte(100))
+        await tx.sign()
+        const txid = tx.id('hex')
+        const plannedTokens = pairs.map((secret, vout) => ({ txid, vout, script: tx.outputs[vout].lockingScript.toHex(),
+            satoshis: 13, secret, fileHash: null, confirmed: false, spent: false }))
+        const result = await submitOperation(tx, { type: 'mint', reservation, number, plannedTokens, time: Date.now() })
+        if (result.outcome === 'rejected') {
+            res.status(422).json({ error: 'The network rejected token creation. No tokens were added. Try again later.' }); return
+        }
+        res.status(result.outcome === 'accepted' ? 200 : 202).json({ txid, number,
+            status: result.outcome === 'accepted' ? 'success' : 'pending',
+            message: result.outcome === 'accepted' ? `${number} write token${number === 1 ? ' is' : 's are'} ready to use. You can upload a file now.` :
+                'Token creation is awaiting network confirmation. Your funds are reserved. Check pending actions before minting again.' })
+    } catch (error) {
+        console.error('Token creation could not finish', error)
+        const pending = await releaseUnsubmitted(reservation).catch(() => null)
+        if (pending) { res.status(202).json({ status: 'pending', txid: pending.txid,
+            message: 'Token creation is awaiting reconciliation. Check pending actions before minting again.' }); return }
+        res.status(503).json({ error: 'We could not prepare token creation. Please try again shortly.' })
     }
-
-    // Pick the largest UTXO to avoid dust inputs
-    utxos.sort((a, b) => b.satoshis - a.satoshis)
-    const utxo = utxos[0]
-
-    const minRequired = (number * 13) + 100
-    if (utxo.satoshis < minRequired) {
-      res.send({ error: 'not enough satoshis in largest UTXO', number, available: utxo.satoshis, required: minRequired })
-      return
-    }
-
-    const beef = await woc.getBeef(utxo.txid)
-
-    // Generate unique secret-hash pairs for each token
-    const secretPairs = []
-    for (let i = 0; i < number; i++) {
-      const pair = HashPuzzle.generateSecretPair()
-      secretPairs.push(pair)
-    }
-
-    const sourceTransaction = Transaction.fromHexBEEF(beef)
-
-    // Create transaction with hash-locked outputs
-    const tx = new Transaction()
-    tx.addInput({
-      sourceTransaction,
-      sourceOutputIndex: utxo.vout,
-      unlockingScriptTemplate: new P2PKH().unlock(key)
-    })
-    for (const pair of secretPairs) {
-      tx.addOutput({
-        satoshis: 13,
-        lockingScript: new HashPuzzle().lock(pair.hash)
-      })
-    }
-    tx.addOutput({
-      change: true,
-      lockingScript: new P2PKH().lock(address)
-    })
-    await tx.fee(new SatoshisPerKilobyte(100))
-    await tx.sign()
-
-    // Broadcast transaction
-    const initialResponse = await tx.broadcast(Arc)
-
-    const txid = tx.id('hex')
-
-    // Store transaction data
-    const txDbResponse = await db.collection('txs').insertOne({
-      txid,
-      beef: tx.toHexBEEF(),
-      arc: [initialResponse],
-      number,
-    })
-
-    // Store token data
-    const utxosDbResponse = await db.collection('utxos').insertMany(
-      secretPairs.map((secret, vout) => ({
-        txid,
-        vout,
-        script: tx.outputs[vout].lockingScript.toHex(),
-        satoshis: 13,
-        secret,
-        fileHash: null,
-        confirmed: false,
-      }))
-    )
-
-    res.send({ txid, number, txDbResponse, utxosDbResponse })
-  } catch (error) {
-    console.log(error)
-    res.status(500)
-    res.send({ error: error.message || error })
-  }
 }

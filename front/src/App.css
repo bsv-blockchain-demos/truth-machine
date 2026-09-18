@@ -1474,3 +1474,27 @@ button {
 [data-theme="dark"] .tm-modal__loading-overlay {
   background: rgba(27, 24, 21, 0.75);
 }
+
+
+/* Outcome messages stay alongside the action they describe. */
+.tm-notice {
+  margin: 16px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--tm-rule);
+  border-left-width: 4px;
+  border-radius: var(--tm-radius);
+  background: var(--tm-cream);
+  color: var(--tm-ink);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.tm-notice p { margin: 6px 0 0; }
+.tm-notice--success { border-color: #3f8658; }
+.tm-notice--pending, .tm-verdict--pending { border-color: #a97925; }
+.tm-notice--error { border-color: #bc4b45; }
+.tm-notice--loading { border-color: #557aa5; }
+.tm-text-action { text-decoration: underline; padding: 6px; color: var(--tm-ink); }
+.tm-receipt__id-row { overflow-wrap: anywhere; }
+.tm-upload-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.tm-dropzone__instruction { overflow-wrap: anywhere; }

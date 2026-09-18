@@ -61,10 +61,11 @@ class WocClient {
         if (this.isProcessingQueue) return;
         this.isProcessingQueue = true;
         while (this.requestQueue.length > 0) {
-            const { resolve, request } = this.requestQueue.shift();
+            const { resolve, reject, request } = this.requestQueue.shift();
             try {
-                console.log({ url: request.url, options: request.options })
-                const response = await fetch(request.url, request.options, { cache: 'no-store', next: { revalidate: 3600 } });
+                const response = await fetch(request.url, { ...request.options, signal: AbortSignal.timeout(8000) });
+                if (response.status === 404) { resolve(null); continue; }
+                if (!response.ok) throw new Error('Blockchain lookup is temporarily unavailable');
                 if (request.options.headers.Accept === 'plain/text') {
                     const text = await response.text();
                     resolve(text);
@@ -73,8 +74,7 @@ class WocClient {
                     resolve(data);
                 }
             } catch (error) {
-                console.log({ error })
-                resolve(null);
+                reject(error);
             }
             await new Promise(resolve => setTimeout(resolve, 350));
         }
@@ -153,25 +153,13 @@ class WocClient {
      *          - script: Locking script
      */
     async getUtxos(address) {
-        console.log({ getUtxo: address })
-        let confirmed = { results: [] }
-        let unconfirmed = { results: [] }
-        try {
-            confirmed = await this.getJson(`/address/${address}/confirmed/unspent`)
-        } catch (error) {
-            console.log({ error })
-        }
-        try {
-            unconfirmed = await this.getJson(`/address/${address}/unconfirmed/unspent`)
-        } catch (error) {
-            console.log({ error })
-        }
-        const combined = []
-        confirmed?.result?.map(utxo => combined.push(utxo))
-        unconfirmed?.result?.map(utxo => combined.push(utxo))
-        const script = confirmed?.script || unconfirmed?.script || ''
+        const confirmed = await this.getJson(`/address/${address}/confirmed/unspent`)
+        const unconfirmed = await this.getJson(`/address/${address}/unconfirmed/unspent`)
+        if (!confirmed || !unconfirmed) throw new Error('Treasury balance is temporarily unavailable')
+        if (!Array.isArray(confirmed.result) || !Array.isArray(unconfirmed.result)) throw new Error('Treasury balance response was incomplete')
+        const combined = [...confirmed.result, ...unconfirmed.result]
+        const script = confirmed.script || unconfirmed.script || ''
         const formatted = combined.filter(u => !u.isSpentInMempoolTx).map(u => ({ txid: u.tx_hash, vout: u.tx_pos, satoshis: u.value, script }))
-        console.log({ confirmed, unconfirmed, combined, formatted })
         return formatted
     }
 

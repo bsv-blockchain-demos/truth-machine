@@ -41,11 +41,13 @@ export default async function (req: Request, res: Response) {
                 error: invalidProof ? 'The blockchain proof could not be validated. Try checking again later.' : 'The transaction was rejected. This file has not been confirmed on the blockchain.' }); return
         }
         let depth: number | null = null
+        let blockHeight: number | null = null
         if (inBlock && tx.merklePath) {
+            blockHeight = tx.merklePath.blockHeight
             try { depth = Math.max(1, await bounded(tracker.currentHeight()) - tx.merklePath.blockHeight + 1) } catch { /* Proof is valid even when current height is unavailable. */ }
         }
         res.json({ ...common, status: inBlock ? 'confirmed' : 'pending', valid: inBlock, contentValid: true,
-            broadcast, inBlock, depth, downloadAllowed: true,
+            broadcast, inBlock, depth, blockHeight, downloadAllowed: true,
             message: inBlock ? 'Your file matches its fingerprint and its blockchain proof is verified.' :
                 unavailable ? 'Your file matches its fingerprint. Blockchain verification is temporarily unavailable. You can download the matching file or check again later.' :
                 broadcast ? 'Your file matches its fingerprint. The transaction is accepted, but block confirmation is still pending. You can download the file and check again later.' :

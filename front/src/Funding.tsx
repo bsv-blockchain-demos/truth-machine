@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useFunding } from './useFunding'
 import Notice from './components/Notice'
-import { IconCopy, IconMinus, IconPlus } from './components/icons'
+import { IconCopy, IconMinus, IconPlus, IconChevron } from './components/icons'
 
 const API_DETAILS = 'GET /checkTreasury returns address, balance, tokens and pending. GET /fund/:n mints tokens. ' +
     'GET /utxoStatusUpdate re-checks pending actions. GET /consolidate sweeps unused tokens back to the treasury.'
@@ -36,7 +36,7 @@ export default function Funding() {
                     {refreshing ? 'Checking…' : 'Retry treasury check'}
                 </button>
             </div>
-            <details className="tm-details"><summary>API details</summary><p>{API_DETAILS}</p></details>
+            <details className="tm-details"><summary><IconChevron className="tm-details__chev" />API details</summary><p>{API_DETAILS}</p></details>
         </>
     }
 
@@ -118,6 +118,6 @@ export default function Funding() {
             </div>
         </div>
 
-        <details className="tm-details"><summary>API details</summary><p>{API_DETAILS}</p></details>
+        <details className="tm-details"><summary><IconChevron className="tm-details__chev" />API details</summary><p>{API_DETAILS}</p></details>
     </>
 }

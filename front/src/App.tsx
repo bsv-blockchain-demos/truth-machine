@@ -66,9 +66,9 @@ function TreasuryPill() {
             aria-label={`${description}. ${treasuryOpen ? 'Close' : 'Open'} the treasury panel`}
             onClick={toggleTreasury}>
             <span className="tm-dot" />
-            <span className="tm-label tm-pill__label">Treasury</span>
-            {showValue && <span className="tm-pill__val">{value}</span>}
-            {!error && fundingInfo && <span className="tm-hint tm-pill__unit">sats</span>}
+            <span className="tm-pill__label">Treasury</span>
+            {showValue && <span className={`tm-pill__val${error ? ' tm-pill__val--txt' : ''}`}>{value}</span>}
+            {!error && fundingInfo && <span className="tm-pill__unit">sats</span>}
             <span className="tm-pill__badge">{badge}</span>
         </button>
     )
@@ -145,11 +145,7 @@ function Page() {
                 <div>
                     <span className="tm-badge"><span className="tm-dot" />Live demo on the BSV blockchain</span>
                     <h2 className="tm-hero__headline">Proof that a file existed <em>before a given block,</em> byte for byte.</h2>
-                    <p className="tm-hero__sub">Upload a file and its fingerprint is written to the BSV blockchain. Anyone holding the transaction ID or the fingerprint can check the file against that record later.</p>
-                </div>
-                <div className="tm-claims">
-                    <p><strong>What this proves</strong>The exact bytes existed no later than the block that carries the transaction.</p>
-                    <p><strong>What it does not prove</strong>Who made the file, when it was made, or whether anything in it is true.</p>
+                    <p className="tm-hero__sub">Upload a file and its fingerprint is written to the BSV blockchain. Anyone holding the transaction ID or the fingerprint can check the file against that record later. It does not prove who made the file, when it was made, or that its contents are true.</p>
                 </div>
             </section>
 
@@ -197,7 +193,7 @@ function Page() {
             </div>
 
             <section className="tm-shell tm-about">
-                <div>
+                <div className="tm-about__lead">
                     <h3>About this demo</h3>
                     <p>Truth Machine is a proof of concept by the BSV Association. When you upload a file, the server computes its SHA-256 fingerprint, writes that fingerprint into an OP_RETURN output of a BSV transaction, and stores the bytes alongside the transaction in BEEF format. Verification recomputes the fingerprint, compares it to the on-chain commitment, and checks a Merkle proof against block headers.</p>
                 </div>
@@ -221,7 +217,8 @@ function Page() {
                 <div className="tm-footer__l">
                     <span>&copy; {new Date().getFullYear()}</span>
                     <span className="tm-footer__mark"><IconBsvMark /></span>
-                    <span className="tm-footer__org">BSV Association.</span>
+                    <a className="tm-footer__org" href="https://bsvassociation.org/"
+                        target="_blank" rel="noopener noreferrer">BSV Association.</a>
                     <span>A Swiss non-profit association.</span>
                 </div>
                 <div className="tm-footer__r">

@@ -2,10 +2,10 @@ import type { ReactNode } from 'react'
 
 // One 24x24 grid, 2px-ish rounded stroke, currentColor. Decorative by default:
 // every icon in this app sits beside a worded label, so none of them carry meaning alone.
-function Glyph({ size = 18, children }: { size?: number; children: ReactNode }) {
+function Glyph({ size = 18, className, children }: { size?: number; className?: string; children: ReactNode }) {
     return (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}>
             {children}
         </svg>
     )
@@ -61,6 +61,18 @@ export function IconThemeAuto({ size }: { size?: number }) {
 
 export function IconThemeDark({ size }: { size?: number }) {
     return <Glyph size={size}><path d="M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.6 6.6 0 0 0 9.7 9.7z" /></Glyph>
+}
+
+export function IconChevron({ size = 13, className }: { size?: number; className?: string }) {
+    return <Glyph size={size} className={className}><path d="M9 6l6 6-6 6" /></Glyph>
+}
+
+export function IconLock({ size = 13 }: { size?: number }) {
+    return <Glyph size={size}><rect x="4.5" y="10.5" width="15" height="9.5" rx="2" /><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" /></Glyph>
+}
+
+export function IconFile({ size = 15 }: { size?: number }) {
+    return <Glyph size={size}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></Glyph>
 }
 
 // Approximation of the BSV Association triangle mark. Replace with the official

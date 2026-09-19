@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef, useImperativeHandle, type Ref } from 'react'
 import { API_URL, ApiError, errorMessage, requestIntegrity, type IntegrityResult } from './api'
 import Notice, { type NoticeValue } from './components/Notice'
-import { IconCopy, IconOk, IconPending, IconFail, IconNone } from './components/icons'
+import { IconCopy, IconOk, IconPending, IconFail, IconNone, IconChevron } from './components/icons'
 
 type CheckState = 'ok' | 'pending' | 'fail' | 'none'
 interface CheckRow { state: CheckState; title: string; detail: string }
@@ -239,6 +239,6 @@ export default function Download({ ref, onStatusChange }: {
 
         {!result && actionNotice && <Notice {...actionNotice} />}
 
-        <details className="tm-details"><summary>API details</summary><p>{API_DETAILS}</p></details>
+        <details className="tm-details"><summary><IconChevron className="tm-details__chev" />API details</summary><p>{API_DETAILS}</p></details>
     </>
 }

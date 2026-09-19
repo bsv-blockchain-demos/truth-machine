@@ -2,13 +2,21 @@ import { useState, useRef } from 'react'
 import { useFunding } from './useFunding'
 import { ApiError, errorMessage, formatSize, MAX_FILE_BYTES, requestJson } from './api'
 import Notice, { type NoticeValue } from './components/Notice'
-import { IconCopy, IconExternal, IconUpload } from './components/icons'
+import { IconCopy, IconExternal, IconUpload, IconChevron, IconLock, IconFile, IconOk, IconFail } from './components/icons'
 
 interface UploadResult { txid?: string; fileHash: string; network?: string; status: string; message: string }
-interface CompareSide { name: string; size: number }
+
+// One union drives the comparison surface, mapping one to one onto the band's data-s.
+type CompareState =
+    | { kind: 'idle' }
+    | { kind: 'hashing'; label: string }
+    | { kind: 'invalid'; reason: 'length' | 'hex'; value: string }
+    | { kind: 'match'; source: 'file' | 'paste'; label: string; hash: string }
+    | { kind: 'differ'; source: 'file' | 'paste'; label: string; hash: string }
 
 const API_DETAILS = 'POST /upload sends the raw bytes with X-Original-Filename and X-Original-Content-Type. ' +
-    'It answers with txid, fileHash, network and status. HTTP 202 means the write is saved but acceptance is still pending.'
+    'It answers with txid, fileHash, network and status. HTTP 202 means the write is saved but acceptance is still pending. ' +
+    'Comparison never calls the API: two files that differ by a single byte produce unrelated fingerprints, so they can never satisfy the same record.'
 
 async function sha256(file: File) {
     const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer())
@@ -34,9 +42,9 @@ export default function Upload({ onUploadComplete, onSelectionChange, onVerify }
     const [fileError, setFileError] = useState<string | null>(null)
     const [localHash, setLocalHash] = useState<string | null>(null)
     const [hashing, setHashing] = useState(false)
-    const [compareValue, setCompareValue] = useState('')
-    const [compareSide, setCompareSide] = useState<CompareSide | null>(null)
-    const [compareHashing, setCompareHashing] = useState(false)
+    const [compareText, setCompareText] = useState('')
+    const [compareFile, setCompareFile] = useState<{ label: string; hash: string } | null>(null)
+    const [compareBusy, setCompareBusy] = useState<string | null>(null)
     const [receipt, setReceipt] = useState<UploadResult | null>(null)
     const [loading, setLoading] = useState(false)
     const [notice, setNotice] = useState<NoticeValue | null>(null)
@@ -44,6 +52,8 @@ export default function Upload({ onUploadComplete, onSelectionChange, onVerify }
     const running = useRef(false)
     const hashSequence = useRef(0)
     const compareSequence = useRef(0)
+    const comparePicker = useRef<HTMLInputElement>(null)
+    const comparePaste = useRef<HTMLInputElement>(null)
     const { getFundingInfo, fundingInfo, error: treasuryError, openTreasury, utxoStatusUpdate } = useFunding()
 
     const noTokens = !treasuryError && fundingInfo?.tokens === 0
@@ -64,7 +74,7 @@ export default function Upload({ onUploadComplete, onSelectionChange, onVerify }
 
     function resetComparison() {
         compareSequence.current++
-        setCompareValue(''); setCompareSide(null); setCompareHashing(false)
+        setCompareText(''); setCompareFile(null); setCompareBusy(null)
     }
 
     function selectFile(file: File | undefined) {
@@ -85,15 +95,12 @@ export default function Upload({ onUploadComplete, onSelectionChange, onVerify }
     async function selectCompareFile(file: File | undefined) {
         if (!file) return
         const current = ++compareSequence.current
-        setCompareSide({ name: file.name, size: file.size })
-        setCompareValue(''); setCompareHashing(true)
+        setCompareText(''); setCompareFile(null); setCompareBusy(file.name)
         try {
             const hex = await sha256(file)
-            if (current === compareSequence.current) setCompareValue(hex)
-        } catch {
-            if (current === compareSequence.current) setCompareSide(null)
+            if (current === compareSequence.current) setCompareFile({ label: file.name, hash: hex })
         } finally {
-            if (current === compareSequence.current) setCompareHashing(false)
+            if (current === compareSequence.current) setCompareBusy(null)
         }
     }
 
@@ -161,10 +168,53 @@ export default function Upload({ onUploadComplete, onSelectionChange, onVerify }
     // After an upload the receipt carries the authoritative value, including the recovery
     // case where only the locally computed fingerprint is known.
     const ownHash = receipt?.fileHash || localHash
-    const uploaded = !!receipt
-    const compareId = compareValue.trim().toLowerCase()
-    const compareReady = /^[a-f0-9]{64}$/.test(compareId)
-    const compareMatch = compareReady && ownHash ? compareId === ownHash : null
+    const recorded = !!receipt
+
+    function readPaste(text: string): CompareState {
+        const value = text.trim().toLowerCase()
+        if (!/^[a-f0-9]*$/.test(value)) return { kind: 'invalid', reason: 'hex', value }
+        if (value.length !== 64) return { kind: 'invalid', reason: 'length', value }
+        const label = 'Typed or pasted value'
+        return value === ownHash
+            ? { kind: 'match', source: 'paste', label, hash: value }
+            : { kind: 'differ', source: 'paste', label, hash: value }
+    }
+
+    const compare: CompareState = compareBusy ? { kind: 'hashing', label: compareBusy }
+        : compareFile ? (compareFile.hash === ownHash
+            ? { kind: 'match', source: 'file', ...compareFile }
+            : { kind: 'differ', source: 'file', ...compareFile })
+            : compareText.trim() ? readPaste(compareText) : { kind: 'idle' }
+
+    const resolved = compare.kind === 'match' || compare.kind === 'differ'
+    const bandState = compare.kind === 'hashing' ? 'busy'
+        : compare.kind === 'invalid' ? 'error'
+            : compare.kind === 'match' ? 'ok'
+                : compare.kind === 'differ' ? 'fail' : undefined
+    const pairResult = compare.kind === 'match' ? 'ok' : compare.kind === 'differ' ? 'fail' : undefined
+    const chip = compare.kind === 'match' ? '=' : compare.kind === 'differ' ? '≠' : '?'
+    const subject = resolved && compare.source === 'file' ? compare.label : 'pasted fingerprint'
+    const correction = compare.kind === 'invalid' && compare.reason === 'hex'
+        ? 'A fingerprint uses 0 to 9 and a to f only.'
+        : 'A SHA-256 fingerprint is 64 hexadecimal characters.'
+    const announcement = compare.kind === 'invalid' ? correction
+        : compare.kind === 'hashing' ? `Reading ${compare.label}`
+            : compare.kind === 'match' ? `Identical. ${subject}`
+                : compare.kind === 'differ' ? `Not the same file. ${subject}` : ''
+
+    // Row two of the pair. Row one is always the reference file.
+    const copyRow = compare.kind === 'idle'
+        ? { label: 'The copy', name: 'Not chosen yet', value: 'Choose a file or paste a fingerprint below', waiting: true, mono: false }
+        : compare.kind === 'hashing'
+            ? { label: 'The copy', name: compare.label, value: 'Fingerprinting in your browser', waiting: true, mono: false }
+            : compare.kind === 'invalid'
+                ? { label: 'Pasted', name: compare.reason === 'length' ? `${compare.value.length} of 64 characters` : 'Not a fingerprint', value: compare.value, waiting: true, mono: true }
+                : { label: compare.source === 'paste' ? 'Pasted' : 'The copy', name: compare.label, value: compare.hash, waiting: false, mono: true }
+
+    function restartComparison() {
+        resetComparison()
+        comparePaste.current?.focus()
+    }
 
     return <>
         <label className={`tm-dropzone ${selectedFile ? 'tm-dropzone--filled' : ''}`}
@@ -227,65 +277,70 @@ export default function Upload({ onUploadComplete, onSelectionChange, onVerify }
 
         {copyNotice && <Notice {...copyNotice} />}
 
-        {ownHash && <details className="tm-details">
-            <summary>{uploaded ? 'Check another copy against this file' : 'Compare this file with another'}</summary>
-            <p>
-                {uploaded
-                    ? 'Confirm that another copy is byte for byte the file you just recorded. The check runs in your browser. Nothing is uploaded and no token is spent.'
-                    : 'Confirm that two files are byte for byte identical before you record either one. The check runs in your browser. Nothing is uploaded and no token is spent.'}
-            </p>
+        {/* Not offered with nothing to compare against. */}
+        {(validSelection || recorded) && <details className="tm-cmp">
+            <summary className="tm-cmp__sum">
+                <span className="tm-cmp__sum-t">
+                    <IconChevron className="tm-cmp__chev" />
+                    {recorded ? 'Check another copy against the file you recorded' : 'Compare this file with another copy'}
+                </span>
+                <span className="tm-cmp__free"><IconLock />Runs in your browser. No token</span>
+            </summary>
 
-            <ol className="tm-seq">
-                <li>
-                    <span className="tm-label">1. {uploaded ? 'The file you recorded' : 'This file'}</span>
-                    <div className="tm-seq__meta">
-                        <span className="tm-seq__name">{selectedFile?.name || 'Your uploaded file'}</span>
-                        {selectedFile && <span className="tm-hint">{formatSize(selectedFile.size)}</span>}
-                    </div>
-                    <div className="tm-kv__v">{ownHash}</div>
-                    {uploaded && <p className="tm-hint">This is the fingerprint written to the blockchain.</p>}
-                </li>
+            <div className="tm-cmp__body">
+                <div className="tm-cmp__ctl" data-s={bandState}>
+                    {compare.kind === 'hashing' && <span className="tm-cmp__state">
+                        <span className="tm-cmp__spin" aria-hidden="true" />
+                        <span>Reading {compare.label}</span>
+                    </span>}
 
-                <li>
-                    <span className="tm-label">2. The file to compare</span>
-                    <div className="tm-actions">
-                        <label className="tm-btn tm-btn--secondary tm-btn--sm">
-                            {compareSide ? 'Choose a different file' : 'Choose a file'}
-                            <input type="file" className="tm-sr"
-                                onClick={event => { event.currentTarget.value = '' }}
-                                onChange={event => void selectCompareFile(event.target.files?.[0])} />
-                        </label>
-                        <span className="tm-hint">or paste its fingerprint below</span>
-                    </div>
-                    <div className="tm-seq__meta">
-                        <span className={`tm-seq__name ${compareSide ? '' : 'tm-seq__empty'}`}>
-                            {compareSide ? compareSide.name : 'No file chosen'}
+                    {resolved && <>
+                        <span className="tm-cmp__state">
+                            {compare.kind === 'match' ? <IconOk size={18} /> : <IconFail size={18} />}
+                            <span>{compare.kind === 'match' ? 'Identical' : 'Not the same file'}</span>
+                            <span className="tm-cmp__state-n">{subject}</span>
                         </span>
-                        {compareSide && <span className="tm-hint">{formatSize(compareSide.size)}</span>}
-                    </div>
-                    <input id="compare-hash" className="tm-seq__input" spellCheck={false} autoComplete="off" value={compareValue}
-                        aria-label="Fingerprint to compare"
-                        placeholder={compareHashing ? 'Computing the fingerprint…' : 'Paste a 64-character fingerprint'}
-                        onChange={event => { compareSequence.current++; setCompareValue(event.target.value); setCompareSide(null) }} />
-                </li>
+                        <button type="button" className="tm-cmp__redo" onClick={restartComparison}>Compare another</button>
+                    </>}
 
-                <li>
-                    <span className="tm-label">3. Result</span>
-                    {compareMatch === true && <Notice tone="success" title="The fingerprints match"
-                        message={uploaded
-                            ? 'That copy is byte for byte the file recorded on the blockchain.'
-                            : 'Both files are byte for byte identical, so either one satisfies the same record.'} />}
-                    {compareMatch === false && <Notice tone="error" title="The fingerprints do not match"
-                        message="The two files differ, even if only by a single byte. They cannot satisfy the same blockchain record." />}
-                    {compareMatch === null && <p className="tm-hint">
-                        {compareHashing ? 'Reading the second file…'
-                            : !compareId ? 'Choose a file or paste a fingerprint in step 2 to see the result.'
-                                : `A fingerprint is exactly 64 hexadecimal characters. That value is ${compareId.length}.`}
-                    </p>}
-                </li>
-            </ol>
+                    {(compare.kind === 'idle' || compare.kind === 'invalid') && <>
+                        <button type="button" className="tm-cmp__pick" onClick={() => comparePicker.current?.click()}>
+                            <IconFile />Choose file
+                        </button>
+                        <input ref={comparePicker} type="file" className="tm-sr" tabIndex={-1}
+                            onClick={event => { event.currentTarget.value = '' }}
+                            onChange={event => void selectCompareFile(event.target.files?.[0])} />
+                        <input ref={comparePaste} className="tm-cmp__in" type="text" spellCheck={false} autoComplete="off"
+                            value={compareText} placeholder="or paste its 64-character fingerprint"
+                            aria-label="Fingerprint of the copy to compare"
+                            onChange={event => { setCompareFile(null); setCompareText(event.target.value) }} />
+                    </>}
+                </div>
+
+                <div className="tm-cmp__ev" data-r={pairResult}>
+                    <span className="tm-cmp__ev-r" aria-hidden="true">{chip}</span>
+                    <div className="tm-cmp__ev-row" data-i="1">
+                        <span className="tm-cmp__ev-l">{recorded ? 'Recorded' : 'This file'}</span>
+                        <span className="tm-cmp__ev-n">{selectedFile?.name || 'Your uploaded file'}</span>
+                        <span className={`tm-cmp__ev-h ${ownHash ? '' : 'tm-cmp__ev-h--wait'}`}>
+                            {ownHash || 'Fingerprinting in your browser'}
+                        </span>
+                    </div>
+                    <div className="tm-cmp__ev-row" data-i="2" data-w={copyRow.waiting ? '1' : undefined}>
+                        <span className="tm-cmp__ev-l">{copyRow.label}</span>
+                        <span className="tm-cmp__ev-n">{copyRow.name}</span>
+                        <span className={`tm-cmp__ev-h ${copyRow.waiting && !copyRow.mono ? 'tm-cmp__ev-h--wait' : ''}`}>
+                            {copyRow.value}
+                        </span>
+                    </div>
+                </div>
+
+                <p className={compare.kind === 'invalid' ? 'tm-cmp__foot tm-cmp__foot--err' : 'tm-sr'} aria-live="polite">
+                    {compare.kind === 'invalid' ? correction : announcement}
+                </p>
+            </div>
         </details>}
 
-        <details className="tm-details"><summary>API details</summary><p>{API_DETAILS}</p></details>
+        <details className="tm-details"><summary><IconChevron className="tm-details__chev" />API details</summary><p>{API_DETAILS}</p></details>
     </>
 }

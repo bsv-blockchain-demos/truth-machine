@@ -11,7 +11,7 @@
 --tm-link:oklch(0.45 0.26 264);--tm-cyan:oklch(0.8465 0.1458 208.7);--tm-ring:oklch(0.8465 0.1458 208.7 / 0.55);
 --tm-chip:oklch(0.925 0.005 84);--tm-segctl-track:oklch(0.892 0.006 84);
 --tm-faint:oklch(0.64 0.012 286);--tm-fainter:oklch(0.735 0.012 286);--tm-fainter2:oklch(0.785 0.011 286);--tm-divider2:oklch(0.928 0.005 84);
---tm-ok-fg:#1d8f6b;--tm-ok-bg:rgba(29,158,117,0.12);--tm-ok-line:rgba(29,158,117,0.24);--tm-ok-dot:#1d9e75;
+--tm-ok-fg:#1d8f6b;--tm-ok-strong:oklch(0.45 0.1 163);--tm-ok-bg:rgba(29,158,117,0.12);--tm-ok-line:rgba(29,158,117,0.24);--tm-ok-dot:#1d9e75;
 --tm-pending-fg:#8a6400;--tm-pending-bg:rgba(233,185,73,0.16);--tm-pending-line:rgba(233,185,73,0.45);--tm-pending-dot:#e9b949;
 --tm-fail-fg:#b0443c;--tm-fail-bg:rgba(176,68,60,0.12);--tm-fail-line:rgba(176,68,60,0.3);--tm-fail-dot:#b0443c;
 --tm-info-fg:oklch(0.5 0.008 286);--tm-info-bg:oklch(0.925 0.005 84);--tm-info-line:oklch(0.888 0.006 84);--tm-info-dot:oklch(0.64 0.012 286);
@@ -46,7 +46,7 @@
 --tm-link:oklch(0.7 0.19 258);
 --tm-chip:oklch(0.275 0.032 270);--tm-segctl-track:oklch(0.32 0.032 270);
 --tm-faint:oklch(0.61 0.02 272);--tm-fainter:oklch(0.545 0.016 272);--tm-fainter2:oklch(0.48 0.014 272);--tm-divider2:oklch(0.285 0.032 270);
---tm-ok-fg:#5dcaa5;--tm-ok-bg:rgba(93,202,165,0.16);--tm-ok-line:rgba(93,202,165,0.3);--tm-ok-dot:#5dcaa5;
+--tm-ok-fg:#5dcaa5;--tm-ok-strong:#5dcaa5;--tm-ok-bg:rgba(93,202,165,0.16);--tm-ok-line:rgba(93,202,165,0.3);--tm-ok-dot:#5dcaa5;
 --tm-pending-fg:#e9c766;--tm-pending-bg:rgba(233,185,73,0.18);--tm-pending-line:rgba(233,185,73,0.4);--tm-pending-dot:#e9b949;
 --tm-fail-fg:#e0837c;--tm-fail-bg:rgba(224,131,124,0.16);--tm-fail-line:rgba(224,131,124,0.35);--tm-fail-dot:#e0837c;
 --tm-info-fg:oklch(0.68 0.014 272);--tm-info-bg:oklch(0.285 0.032 270);--tm-info-line:oklch(0.34 0.03 270);--tm-info-dot:oklch(0.61 0.02 272);

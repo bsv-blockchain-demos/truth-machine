@@ -325,8 +325,10 @@ The backend test command builds TypeScript and runs the Node.js regression suite
 | Local frontend calls a hosted API | Set `VITE_API_URL` explicitly and rebuild the frontend. |
 | Ports 3000 or 3030 are occupied | Stop the Compose frontend/backend before starting the local development servers. |
 
-## Contributing and licence
+## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance and [CHANGELOG.md](CHANGELOG.md) for historical changes. Report issues in the [repository issue tracker](https://github.com/bsv-blockchain-demos/truth-machine/issues).
 
-The repository includes the **Open BSV License version 4** in [LICENSE.txt](LICENSE.txt).
+## Licence
+
+**Open BSV Licence v6.** See [LICENSE.txt](LICENSE.txt) for the full terms.

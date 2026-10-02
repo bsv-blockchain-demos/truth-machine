@@ -37,5 +37,6 @@
   },
   "engines": {
     "node": "^22.13.0 || >=24.0.0"
-  }
+  },
+  "license": "SEE LICENSE IN LICENSE.txt"
 }

@@ -10,7 +10,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "SEE LICENSE IN LICENSE.txt",
   "description": "",
   "dependencies": {
     "@bsv/sdk": "^2.7.1",

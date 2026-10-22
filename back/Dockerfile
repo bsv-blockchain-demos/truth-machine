@@ -1,5 +1,5 @@
 # Stage 1: Build the application
-FROM node:22-alpine3.23 AS builder
+FROM node:22.23.4-alpine3.23 AS builder
 RUN apk add --no-cache python3 make g++
 WORKDIR /app
 COPY package*.json ./
@@ -8,7 +8,7 @@ COPY . .
 RUN npm run build && npm prune --omit=dev
 
 # Stage 2: Run the application
-FROM node:22-alpine3.23
+FROM node:22.23.4-alpine3.23
 RUN apk --no-cache upgrade
 WORKDIR /app
 COPY --from=builder /app/dist ./dist
